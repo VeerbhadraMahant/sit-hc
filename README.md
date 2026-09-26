@@ -540,6 +540,12 @@ npm run screenshots
 
 ## Deployment
 
+### Local hackathon demo
+
+Run `npm run demo` to build and start the production app on port 3000. This enables full navigation prefetching and avoids development-time page compilation. Stop an existing server on port 3000 first, or set `PORT` to use another port. The demo build uses `.next-demo`, separately from the development server's `.next` directory. Re-run the command after source changes.
+
+Use `npm run dev` while editing. Its first visit to a page can be slower because Next.js compiles it on demand and automatic link prefetching is disabled in development. Both navigation bars show a spinner while a transition is pending. Prefetched pages are reused for up to 30 seconds; refresh to see updates from another session immediately.
+
 ### Vercel (Recommended)
 1. Push repository to GitHub.
 2. Import project into [Vercel](https://vercel.com/).

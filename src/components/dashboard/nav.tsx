@@ -1,7 +1,7 @@
 "use client";
 
 import { ClipboardList, FileUp, LayoutGrid, Megaphone, MessageSquareText, MessagesSquare, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { NavigationLink } from "@/components/ui/navigation-link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -27,17 +27,13 @@ export function DashboardNav({ className }: { className?: string }) {
       {DASHBOARD_LINKS.map(({ href, label, Icon }) => {
         const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
         return (
-          <Link
+          <NavigationLink
             key={href}
             href={href}
-            className={cn(
-              "inline-flex h-9 items-center gap-2 rounded-navlinks px-4 text-sm font-medium whitespace-nowrap transition-colors",
-              active ? "bg-carbon text-paper" : "text-ink hover:bg-mist",
-            )}
-          >
-            <Icon className="size-4" aria-hidden />
-            {label}
-          </Link>
+            active={active}
+            Icon={Icon}
+            label={label}
+          />
         );
       })}
     </nav>

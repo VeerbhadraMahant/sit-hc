@@ -10,10 +10,9 @@ export async function OutcomeCard() {
     db.from("feedback_actions").select("feedback_id", { count: "exact", head: true }).eq("employee_outcome", "still_happening"),
     db.from("feedback_actions").select("feedback_id", { count: "exact", head: true }).neq("status", "completed").lt("due_date", new Date().toISOString().slice(0, 10)),
   ];
-  const results = await Promise.all(queries);
-  const attention = await db.from("feedback_actions").select("feedback_id,title,employee_outcome,due_date,status")
+  const [results, attention] = await Promise.all([Promise.all(queries), db.from("feedback_actions").select("feedback_id,title,employee_outcome,due_date,status")
     .or(`employee_outcome.eq.still_happening,and(status.neq.completed,due_date.lt.${new Date().toISOString().slice(0, 10)})`)
-    .order("due_date").limit(5);
+    .order("due_date").limit(5)]);
   const labels = ["Employee confirmed it helped", "HR completed · awaiting confirmation", "Employee says still happening", "Overdue commitments"];
   return <Card glow="lime" className="space-y-4">
     <div><p className="eyebrow">Proof of action · all time</p><h2 className="text-heading-sm font-semibold text-ink">Did the change actually help?</h2></div>
