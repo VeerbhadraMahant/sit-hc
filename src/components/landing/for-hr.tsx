@@ -37,7 +37,7 @@ export function ForHr() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-5">
+        <div className="mt-12 grid gap-6 lg:grid-cols-5 lg:items-start">
           <Card className="lg:col-span-3" glow="lime">
             <div className="flex items-center justify-between gap-3">
               <p className="eyebrow">Executive summary · Last 30 days</p>
@@ -61,7 +61,7 @@ export function ForHr() {
             </div>
           </Card>
 
-          <Card className="lg:col-span-2" glow="cyan">
+          <Card className="lg:col-span-2 self-start" glow="cyan">
             <p className="eyebrow">Sentiment heatmap</p>
             <h3 className="text-heading-sm font-semibold text-ink">Department × theme</h3>
             <div className="mt-5 overflow-x-auto">

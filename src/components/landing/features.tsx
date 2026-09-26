@@ -1,6 +1,7 @@
 import {
   AudioLines,
   EyeOff,
+  Layers,
   MessageSquareText,
   Radar,
   RefreshCcw,
@@ -91,9 +92,16 @@ export function Features() {
             </li>
           ))}
           <li className="hidden lg:block">
-            <Card glow="mint" arc className="flex h-full flex-col justify-end">
-              <p className="eyebrow">Built on</p>
-              <p className="mt-1 text-[15px] leading-relaxed text-graphite">
+            <Card
+              glow="mint"
+              arc
+              className="h-full transition-transform duration-300 hover:-translate-y-1 hover:rotate-0 lg:rotate-[1deg]"
+            >
+              <span className="inline-flex size-11 items-center justify-center rounded-images border border-mist bg-white">
+                <Layers className="size-5 text-ink" aria-hidden />
+              </span>
+              <h3 className="mt-5 text-base font-bold text-ink">Built on</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-graphite">
                 Google Gemini for language, vision and embeddings · Supabase Postgres with pgvector and row-level
                 security.
               </p>
