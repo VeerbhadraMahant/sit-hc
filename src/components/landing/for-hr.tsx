@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Cpu } from "lucide-react";
 import { Screenshot } from "@/components/landing/screenshot";
 import { Card } from "@/components/ui/card";
 
@@ -42,11 +42,11 @@ export function ForHr() {
             <div className="flex items-center justify-between gap-3">
               <p className="eyebrow">Executive summary · Last 30 days</p>
               <span className="inline-flex items-center gap-1 rounded-full border border-mist px-2.5 py-0.5 text-xs font-medium text-ink">
-                <Sparkles className="size-3.5 text-cobalt" aria-hidden /> AI generated
+                <Cpu className="size-3.5 text-cobalt" aria-hidden /> AI generated
               </span>
             </div>
             <h3 className="mt-3 text-heading-sm font-semibold text-ink">
-              Every report reads like it was written by an analyst who never sleeps.
+              Four priorities, not four hundred rows.
             </h3>
             <p className="mt-3 text-[15px] leading-relaxed text-graphite">
               A real report, generated from real feedback in this demo — headline, evidence-linked concerns, bright
@@ -61,7 +61,7 @@ export function ForHr() {
             </div>
           </Card>
 
-          <Card className="lg:col-span-2 self-start" glow="cyan">
+          <Card className="lg:col-span-2 self-start">
             <p className="eyebrow">Sentiment heatmap</p>
             <h3 className="text-heading-sm font-semibold text-ink">Department × theme</h3>
             <div className="mt-5 overflow-x-auto">

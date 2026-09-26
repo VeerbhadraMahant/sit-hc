@@ -18,7 +18,7 @@ export async function WellbeingCard({ weeks = 8, className }: { weeks?: number; 
   const delta = latest && previous ? latest.avg_mood - previous.avg_mood : null;
 
   return (
-    <Card glow="mint" arc className={className}>
+    <Card className={className}>
       <CardHeader
         eyebrow="Wellbeing check-ins"
         title="How people are feeling"

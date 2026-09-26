@@ -308,8 +308,8 @@ export const TWO_ROW_FEEDBACK_ITEMS: PretokenizedCard[] = [
     responsiveVisibility: "block",
   },
   {
-    ...SAMPLE_FEEDBACK_ITEMS[2], // DK - Product · Vision & Growth
-    segments: tokenizeHighlightedText(SAMPLE_FEEDBACK_ITEMS[2].text, SAMPLE_FEEDBACK_ITEMS[2].highlights),
+    ...SAMPLE_FEEDBACK_ITEMS[8], // Engineering · paged at 3am, on-call burnout
+    segments: tokenizeHighlightedText(SAMPLE_FEEDBACK_ITEMS[8].text, SAMPLE_FEEDBACK_ITEMS[8].highlights),
     responsiveVisibility: "hidden sm:block",
   },
   // Row 2 (Bottom)

@@ -75,7 +75,13 @@ export function CheckinWidget({ existing, compact = false }: { existing: CheckIn
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't save your check-in.");
       setSaved(true);
-      toast.success(existing ? "Check-in updated" : "Thanks for checking in");
+      // A rough week deserves a different response than a good one — not a diagnosis,
+      // just an honest acknowledgment instead of the same generic "thanks" either way.
+      if (mood <= 2) {
+        toast.success("Noted. That's a hard place to be. This only ever shows up as part of a team trend, never singled out.");
+      } else {
+        toast.success(existing ? "Check-in updated" : "Thanks for checking in");
+      }
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message);

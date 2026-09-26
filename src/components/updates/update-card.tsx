@@ -19,7 +19,7 @@ export function UpdateCard({
   compact?: boolean;
 }) {
   return (
-    <Card glow="lime" arc className={cn("flex flex-col gap-3", compact && "p-5", className)}>
+    <Card className={cn("flex flex-col gap-3", compact && "p-5", className)}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex size-8 items-center justify-center rounded-full bg-lime text-obsidian" aria-hidden>
           <Megaphone className="size-4" />

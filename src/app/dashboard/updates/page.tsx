@@ -16,10 +16,10 @@ export default async function UpdatesPage() {
     .limit(100);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <p className="eyebrow">You said, we did</p>
-        <h1 className="text-heading-md font-semibold text-obsidian">Show employees their feedback changed something</h1>
+        <h1 className="text-heading-md font-semibold text-obsidian sm:text-heading">Show employees their feedback changed something</h1>
         <p className="mt-1 max-w-2xl text-pewter">
           Updates appear on every employee&apos;s portal and trigger a notification. Tip: publish directly from an action item on the Insights page.
         </p>

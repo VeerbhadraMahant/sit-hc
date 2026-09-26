@@ -7,9 +7,10 @@ import { Logo } from "@/components/logo";
 import { ButtonLink } from "@/components/ui/button";
 
 const LINKS = [
-  { href: "#how", label: "How it works" },
   { href: "#features", label: "Features" },
+  { href: "#how", label: "How it works" },
   { href: "#hr", label: "For HR" },
+  { href: "#employees", label: "For employees" },
   { href: "#privacy", label: "Privacy" },
 ];
 

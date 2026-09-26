@@ -44,12 +44,12 @@ interface QuickTab {
 }
 
 const QUICK_TABS: QuickTab[] = [
-  { label: "All Items", key: "all", params: {} },
-  { label: "Critical Priority", key: "critical", params: { urgency: "critical" }, isCritical: true },
-  { label: "High Urgency", key: "high", params: { urgency: "high" }, isWarning: true },
+  { label: "All items", key: "all", params: {} },
+  { label: "Critical priority", key: "critical", params: { urgency: "critical" }, isCritical: true },
+  { label: "High urgency", key: "high", params: { urgency: "high" }, isWarning: true },
   { label: "Unresolved", key: "new", params: { status: "new" } },
-  { label: "Workplace Safety", key: "safety", params: { theme: "Workplace Safety" } },
-  { label: "Action Taken", key: "actioned", params: { status: "actioned" } },
+  { label: "Workplace safety", key: "safety", params: { theme: "Workplace Safety" } },
+  { label: "Action taken", key: "actioned", params: { status: "actioned" } },
 ];
 
 export function FeedbackFiltersBar() {

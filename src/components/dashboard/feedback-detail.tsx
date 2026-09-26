@@ -158,13 +158,15 @@ export function FeedbackDetail({
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <p className="font-semibold text-[#a82323]">Critical Risk Protocol Active</p>
+                <p className="font-semibold text-[#a82323]">Critical risk flagged</p>
                 <span className="rounded-full bg-red-500/20 px-2 py-0.2 text-[11px] font-semibold text-[#d03b3b]">
-                  Priority Escalation
+                  Needs review now
                 </span>
               </div>
               <p className="text-xs text-graphite mt-1 leading-relaxed">
-                This submission contains high-severity triggers ({risks.map((r) => RISK_LABELS[r] ?? r).join(", ") || "Safety/Harassment"}). Instant alert was dispatched to HR leadership. Handle with strict confidentiality and compliance protocol.
+                {risks.length > 0
+                  ? `Flagged for ${risks.map((r) => (RISK_LABELS[r] ?? r).toLowerCase()).join(", ")}. HR is alerted automatically for critical items like this — handle with confidentiality.`
+                  : "Marked critical by the analysis. Handle with confidentiality."}
               </p>
             </div>
           </div>
@@ -281,7 +283,7 @@ export function FeedbackDetail({
             )}
           >
             <p className={cn("eyebrow", f.urgency === "critical" ? "text-[#a82323]" : "text-forest")}>
-              {f.urgency === "critical" ? "Immediate Recommended Action" : "Suggested next step"}
+              {f.urgency === "critical" ? "Immediate recommended action" : "Suggested next step"}
             </p>
             <p className="text-ink font-medium">{f.suggested_action}</p>
           </div>

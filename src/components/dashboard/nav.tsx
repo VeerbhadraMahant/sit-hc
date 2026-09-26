@@ -25,7 +25,7 @@ function DashboardNavInner({ className }: { className?: string }) {
   return (
     <nav
       className={cn(
-        // Icon-only from md, full icon+label from lg — guarantees every tab fits with
+        // Icon-only from md, full icon+label from xl — guarantees every tab fits with
         // no horizontal scrolling at any desktop width; overflow-x-auto stays only as
         // a last-resort safety net, never the normal path.
         "flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-mist bg-paper p-1 shadow-[rgba(29,33,48,0.08)_0_0_0_1px]",

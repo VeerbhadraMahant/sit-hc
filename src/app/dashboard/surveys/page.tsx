@@ -17,11 +17,11 @@ export default async function SurveysPage() {
   const rest = surveys.filter((s) => s.status !== "active");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Pulse surveys</p>
-          <h1 className="text-heading-md font-semibold text-obsidian">Ask the whole company, in two minutes</h1>
+          <h1 className="text-heading-md font-semibold text-obsidian sm:text-heading">Ask the whole company, in two minutes</h1>
           <p className="mt-1 max-w-2xl text-pewter">
             Short, anonymous surveys with eNPS, scales and open questions. Each employee answers once; results by team only show for groups of 5+.
           </p>

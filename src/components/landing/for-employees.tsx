@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 const PANELS = [
   {
     Icon: MessagesSquare,
-    glow: "mint" as const,
     label: "Home & my feedback",
     body: "One place to give feedback, check status, and see HR's reply — even on anonymous items.",
     shot: "/screenshots/portal-home.png",
@@ -13,7 +12,6 @@ const PANELS = [
   },
   {
     Icon: ClipboardList,
-    glow: "cyan" as const,
     label: "Pulse surveys",
     body: "Short eNPS and scale surveys, answered in under two minutes, always anonymous.",
     shot: "/screenshots/portal-surveys.png",
@@ -21,7 +19,7 @@ const PANELS = [
   },
   {
     Icon: Megaphone,
-    glow: "orchid" as const,
+    glow: "lime" as const,
     label: "You said, we did",
     body: "A public board showing exactly what changed because people spoke up.",
     shot: "/screenshots/portal-updates.png",
@@ -46,7 +44,7 @@ export function ForEmployees() {
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {PANELS.map(({ Icon, glow, label, body, shot, alt }) => (
-            <Card key={label} glow={glow} arc>
+            <Card key={label} glow={glow} arc={!!glow}>
               <span className="inline-flex size-9 items-center justify-center rounded-images bg-mist">
                 <Icon className="size-4 text-ink" aria-hidden />
               </span>

@@ -190,9 +190,9 @@ function FeedbackListItem({ f, href, active }: { f: ListRow; href: string; activ
         className={cn(
           "relative block px-5 py-4 transition-colors",
           isCritical
-            ? "border-l-[3px] border-l-[#d03b3b] bg-red-500/[0.04] hover:bg-red-500/[0.08]"
+            ? "border-l-[3px] border-l-critical bg-critical/[0.04] hover:bg-critical/[0.08]"
             : isHigh
-            ? "border-l-[3px] border-l-amber-500 bg-amber-500/[0.02] hover:bg-amber-500/[0.06]"
+            ? "border-l-[3px] border-l-[var(--status-serious)] bg-[var(--status-serious)]/[0.03] hover:bg-[var(--status-serious)]/[0.07]"
             : "hover:bg-mist/50",
           active && "bg-mist/70 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-cobalt",
         )}

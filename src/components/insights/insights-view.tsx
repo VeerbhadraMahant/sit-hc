@@ -179,7 +179,7 @@ export function InsightsView({
   const doneCount = Object.values(done).filter(Boolean).length;
 
   return (
-    <div className="insights-print space-y-8">
+    <div className="insights-print space-y-6">
       {/* Header */}
       <div>
         <p className="eyebrow">AI insight reports</p>
@@ -187,6 +187,7 @@ export function InsightsView({
         <p className="mt-3 max-w-xl text-pewter">
           Vocalyze reads every analysed piece of feedback, finds the patterns and turns them into a briefing you can take
           to leadership. <span className="font-semibold text-ink">{recentCount} items</span> analysed in the last 30 days.
+          Pick a different window below for the report itself.
         </p>
       </div>
 

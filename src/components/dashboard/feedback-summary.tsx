@@ -1,8 +1,8 @@
-import { AlertTriangle, CircleCheck, Info } from "lucide-react";
 import { BarList } from "@/components/dashboard/charts/bar-list";
 import { formatScore } from "@/components/dashboard/charts/scale";
 import { SentimentGauge } from "@/components/dashboard/charts/sentiment-gauge";
 import { Card } from "@/components/ui/card";
+import { urgencyMeta } from "@/components/ui/badge";
 import { getFeedbackSummary, type FeedbackFilters } from "@/lib/dashboard-data";
 
 export async function FeedbackSummaryStrip({ filters, filtered }: { filters: FeedbackFilters; filtered: boolean }) {
@@ -40,12 +40,15 @@ export async function FeedbackSummaryStrip({ filters, filtered }: { filters: Fee
         <p className="eyebrow mb-2">Urgency breakdown</p>
         <BarList
           max={s.total}
-          items={[
-            { label: "Low", value: s.urgency.low, color: "var(--status-good)", icon: <CircleCheck className="size-3.5" style={{ color: "var(--status-good)" }} aria-hidden /> },
-            { label: "Medium", value: s.urgency.medium, color: "var(--status-warning)", icon: <Info className="size-3.5" style={{ color: "var(--status-warning)" }} aria-hidden /> },
-            { label: "High", value: s.urgency.high, color: "var(--status-serious)", icon: <AlertTriangle className="size-3.5" style={{ color: "var(--status-serious)" }} aria-hidden /> },
-            { label: "Critical", value: s.urgency.critical, color: "var(--status-critical)", icon: <AlertTriangle className="size-3.5" style={{ color: "var(--status-critical)" }} aria-hidden /> },
-          ]}
+          items={(["low", "medium", "high", "critical"] as const).map((level) => {
+            const meta = urgencyMeta[level];
+            return {
+              label: meta.label,
+              value: s.urgency[level],
+              color: meta.color,
+              icon: <meta.Icon className="size-3.5" style={{ color: meta.color }} aria-hidden />,
+            };
+          })}
         />
       </div>
     </Card>

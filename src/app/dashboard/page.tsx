@@ -102,7 +102,7 @@ export default async function OverviewPage({
                 </span>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-[#a82323]">Critical Attention Required</h2>
+                    <h2 className="text-sm font-semibold text-[#a82323]">Critical attention required</h2>
                     <span className="inline-flex items-center rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-[#d03b3b]">
                       {kpis.openUrgent} open items
                     </span>
@@ -116,7 +116,7 @@ export default async function OverviewPage({
                 href="/dashboard/feedback?urgency=critical"
                 className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-buttons bg-[#d03b3b] px-4 text-xs font-medium text-white shadow-xs hover:bg-[#b52a2a] transition-colors"
               >
-                Review Urgent Queue <ArrowRight className="size-3.5" aria-hidden />
+                Review urgent queue <ArrowRight className="size-3.5" aria-hidden />
               </Link>
             </div>
           )}

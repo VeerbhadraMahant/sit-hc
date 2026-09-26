@@ -14,7 +14,7 @@ export async function OutcomeCard() {
     .or(`employee_outcome.eq.still_happening,and(status.neq.completed,due_date.lt.${new Date().toISOString().slice(0, 10)})`)
     .order("due_date").limit(5)]);
   const labels = ["Employee confirmed it helped", "HR completed · awaiting confirmation", "Employee says still happening", "Overdue commitments"];
-  return <Card glow="lime" className="space-y-4">
+  return <Card className="space-y-4">
     <div><p className="eyebrow">Proof of action · all time</p><h2 className="text-heading-sm font-semibold text-ink">Did the change actually help?</h2></div>
     {results.some((r) => r.error) || attention.error ? <p className="text-sm text-pewter">Action outcomes are temporarily unavailable.</p> : <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{results.map((result, i) => <div key={labels[i]} className="rounded-smallcards border border-mist p-4">

@@ -10,7 +10,7 @@ import {
   Play,
   ScanText,
   ShieldAlert,
-  Sparkles,
+  WandSparkles,
 } from "lucide-react";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -53,13 +53,13 @@ const FeedbackCard = memo(function FeedbackCard({
 }) {
   const ChannelIcon = CHANNEL_ICONS[item.channel];
 
-  // Subtle sentiment border styling for highlighted mode
+  // Sentiment border styling for highlighted mode, tied to the app's own status tokens.
   const highlightedBorderCls =
     item.sentiment === "negative"
-      ? "border-red-200/90 shadow-[0_2px_8px_rgba(227,73,72,0.06)]"
+      ? "border-[var(--viz-negative)]/30 shadow-[0_2px_8px_rgba(227,73,72,0.06)]"
       : item.sentiment === "positive"
-        ? "border-emerald-200/90 shadow-[0_2px_8px_rgba(12,163,12,0.06)]"
-        : "border-amber-200/90 shadow-[0_2px_8px_rgba(250,178,25,0.06)]";
+        ? "border-[var(--status-good)]/30 shadow-[0_2px_8px_rgba(12,163,12,0.06)]"
+        : "border-[var(--status-warning)]/30 shadow-[0_2px_8px_rgba(250,178,25,0.06)]";
 
   return (
     <article
@@ -75,22 +75,18 @@ const FeedbackCard = memo(function FeedbackCard({
       {/* Card Header: identical height & spacing in both modes */}
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-mist/70">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div
-            className={cn(
-              "size-8 shrink-0 rounded-full border flex items-center justify-center font-mono text-xs font-semibold select-none",
-              item.authorBg
-            )}
+          <span
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-mist bg-white"
             aria-hidden="true"
           >
-            {item.authorInitials}
-          </div>
+            <ChannelIcon className="size-3.5 text-ink" aria-hidden="true" />
+          </span>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-ink truncate leading-tight">
               {item.department}
             </p>
-            <p className="text-[11px] text-pewter flex items-center gap-1 leading-tight mt-0.5">
-              <ChannelIcon className="size-3 text-pewter" aria-hidden="true" />
-              <span>{CHANNEL_LABELS[item.channel]}</span>
+            <p className="text-[11px] text-pewter leading-tight mt-0.5">
+              {CHANNEL_LABELS[item.channel]} · anonymous
             </p>
           </div>
         </div>
@@ -102,18 +98,18 @@ const FeedbackCard = memo(function FeedbackCard({
               Raw entry
             </span>
           ) : item.sentiment === "negative" ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-red-200/80 bg-red-500/10 px-2.5 py-0.5 text-[11px] font-medium text-[#b91c1c]">
-              <ShieldAlert className="size-3 text-[#d03b3b]" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--viz-negative)]/30 bg-[var(--viz-negative)]/10 px-2.5 py-0.5 text-[11px] font-medium text-[var(--viz-negative)]">
+              <ShieldAlert className="size-3" aria-hidden="true" />
               Risk signal
             </span>
           ) : item.sentiment === "positive" ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-[#15803d]">
-              <CheckCircle2 className="size-3 text-[#0ca30c]" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--status-good)]/30 bg-[var(--status-good)]/10 px-2.5 py-0.5 text-[11px] font-medium text-[var(--status-good)]">
+              <CheckCircle2 className="size-3" aria-hidden="true" />
               Positive
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-[#b45309]">
-              <AlertTriangle className="size-3 text-[#fab219]" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--status-warning)]/40 bg-[var(--status-warning)]/10 px-2.5 py-0.5 text-[11px] font-medium text-[#8a6412]">
+              <AlertTriangle className="size-3" aria-hidden="true" />
               Attention
             </span>
           )}
@@ -141,10 +137,10 @@ const FeedbackCard = memo(function FeedbackCard({
 
           const highlightStyles =
             seg.type === "negative"
-              ? "bg-red-500/15 text-[#b91c1c] border-b border-red-300/60"
+              ? "bg-[var(--viz-negative)]/15 text-[var(--viz-negative)] border-b border-[var(--viz-negative)]/40"
               : seg.type === "positive"
-                ? "bg-emerald-500/15 text-[#15803d] border-b border-emerald-300/60"
-                : "bg-amber-400/20 text-[#b45309] border-b border-amber-300/60";
+                ? "bg-[var(--status-good)]/15 text-[var(--status-good)] border-b border-[var(--status-good)]/40"
+                : "bg-[var(--status-warning)]/20 text-[#8a6412] border-b border-[var(--status-warning)]/50";
 
           return (
             <mark
@@ -164,12 +160,7 @@ const FeedbackCard = memo(function FeedbackCard({
       {/* Card Footer: Theme meta */}
       <div className="mt-3.5 pt-2.5 border-t border-mist/50 flex items-center justify-between text-[11px]">
         <span className="text-pewter font-medium">{item.theme}</span>
-        {mode === "highlighted" && (
-          <span className="font-mono text-[10px] text-cobalt flex items-center gap-1">
-            <Sparkles className="size-2.5 text-cobalt" aria-hidden="true" />
-            AI classified
-          </span>
-        )}
+        {mode === "highlighted" && <span className="text-[10px] text-cobalt">Classified by Vocalyze</span>}
       </div>
     </article>
   );
@@ -229,11 +220,15 @@ export function FeedbackComparisonSlider({
   const [sliderPos, setSliderPos] = useState(initialPosition);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+  // Respect prefers-reduced-motion: don't start the auto-sweep at all.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setIsAutoPlaying(false);
+  }, []);
+
   // References for direct hardware-accelerated style mutation without React re-renders
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderLineRef = useRef<HTMLDivElement>(null);
   const overlayLayerRef = useRef<HTMLDivElement>(null);
-  const readoutRef = useRef<HTMLSpanElement>(null);
 
   const posRef = useRef(initialPosition);
   const isDraggingRef = useRef(false);
@@ -252,9 +247,6 @@ export function FeedbackComparisonSlider({
     if (overlayLayerRef.current) {
       overlayLayerRef.current.style.clipPath = `inset(0 ${100 - clampedPos}% 0 0)`;
       (overlayLayerRef.current.style as CSSStyleDeclaration & { webkitClipPath?: string }).webkitClipPath = `inset(0 ${100 - clampedPos}% 0 0)`;
-    }
-    if (readoutRef.current) {
-      readoutRef.current.textContent = `${Math.round(clampedPos)}%`;
     }
   }, []);
 
@@ -349,13 +341,6 @@ export function FeedbackComparisonSlider({
     phaseRef.current = computePhaseFromPosition(nextPos);
   };
 
-  const setPreset = (targetPos: number) => {
-    applyPositionToDOM(targetPos);
-    setSliderPos(targetPos);
-    setIsAutoPlaying(false);
-    phaseRef.current = computePhaseFromPosition(targetPos);
-  };
-
   const toggleAutoPlay = () => {
     setIsAutoPlaying((prev) => {
       if (!prev) {
@@ -371,49 +356,21 @@ export function FeedbackComparisonSlider({
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3.5 rounded-cards border border-edge/80 bg-paper/90 px-4 py-3 shadow-field sm:px-6">
         {/* Semantic Color Legend */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-          <span className="font-mono uppercase tracking-wider text-pewter font-medium mr-1">
-            Semantic Highlights:
-          </span>
           <div className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-red-500 ring-2 ring-red-200/80" aria-hidden="true" />
-            <span className="text-ink font-medium">Negative / Risk</span>
+            <span className="size-2.5 rounded-full bg-[var(--viz-negative)]" aria-hidden="true" />
+            <span className="text-ink font-medium">Risk</span>
           </div>
           <div className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-amber-400 ring-2 ring-amber-200/80" aria-hidden="true" />
-            <span className="text-ink font-medium">Attention / Concerns</span>
+            <span className="size-2.5 rounded-full bg-[var(--status-warning)]" aria-hidden="true" />
+            <span className="text-ink font-medium">Worth a look</span>
           </div>
           <div className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200/80" aria-hidden="true" />
-            <span className="text-ink font-medium">Positive / Strengths</span>
+            <span className="size-2.5 rounded-full bg-[var(--status-good)]" aria-hidden="true" />
+            <span className="text-ink font-medium">Positive</span>
           </div>
         </div>
 
-        {/* Animation Play/Pause & Snap Presets */}
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center rounded-navlinks border border-mist bg-mist/60 p-0.5 text-xs">
-            <button
-              type="button"
-              onClick={() => setPreset(0)}
-              className="rounded-full px-2.5 py-1 font-medium text-pewter hover:text-ink transition-colors cursor-pointer"
-            >
-              Raw (0%)
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreset(50)}
-              className="rounded-full px-2.5 py-1 font-medium text-pewter hover:text-ink transition-colors cursor-pointer"
-            >
-              50 / 50
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreset(100)}
-              className="rounded-full px-2.5 py-1 font-medium text-pewter hover:text-ink transition-colors cursor-pointer"
-            >
-              AI (100%)
-            </button>
-          </div>
-
           <button
             type="button"
             onClick={toggleAutoPlay}
@@ -449,17 +406,17 @@ export function FeedbackComparisonSlider({
         )}
         style={{ WebkitUserSelect: "none" }}
       >
-        {/* Floating Side Indicators: Left = AI Understood, Right = Raw Feedback */}
+        {/* Floating Side Indicators: Left = understood by Vocalyze, Right = as typed */}
         <div className="pointer-events-none absolute top-3 left-4 sm:left-6 z-20">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-xs backdrop-blur bg-cobalt/10 border border-cobalt/30 text-cobalt">
-            <Sparkles className="size-3 text-cobalt" aria-hidden="true" />
-            AI Understood
+            <WandSparkles className="size-3" aria-hidden="true" />
+            Understood by Vocalyze
           </span>
         </div>
 
         <div className="pointer-events-none absolute top-3 right-4 sm:right-6 z-20">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-xs backdrop-blur bg-paper/95 border border-edge text-graphite">
-            Raw Feedback
+            As typed
           </span>
         </div>
 
@@ -524,13 +481,7 @@ export function FeedbackComparisonSlider({
       </div>
 
       {/* Helper caption below slider */}
-      <div className="mt-3 flex items-center justify-between text-xs text-pewter px-1">
-        <span>Continuous left-to-right AI scan (drag or use Arrow keys to control)</span>
-        <div className="flex items-center gap-1 font-mono font-medium text-ink tabular-nums">
-          <span>Scan:</span>
-          <span ref={readoutRef}>{Math.round(initialPosition)}%</span>
-        </div>
-      </div>
+      <p className="mt-3 text-xs text-pewter px-1">Drag the handle, or use the arrow keys, to compare the two sides.</p>
     </div>
   );
 }
@@ -541,22 +492,18 @@ export function FeedbackComparisonSlider({
 export function FeedbackIntelligence() {
   return (
     <section id="intelligence" className="relative scroll-mt-20 overflow-hidden py-20 lg:py-28">
-      {/* Background blueprint grid canvas */}
-      <div className="grid-paper grid-paper-fade pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" />
-
       <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6">
         {/* Section Header */}
-        <div className="mx-auto max-w-[820px] text-center">
-          <p className="eyebrow">AI Feedback Intelligence</p>
+        <div className="max-w-[640px]">
+          <p className="eyebrow">Under the hood</p>
           <h2 className="mt-3 text-[34px] leading-[1.08] font-semibold tracking-[-1.2px] text-obsidian sm:text-[46px] lg:text-heading">
-            Analyze large employee feedback data{" "}
-            <span className="brush">within seconds</span>
+            A sentence in, a decision out
           </h2>
           <p className="mt-5 text-subheading text-graphite leading-relaxed">
-            Open-ended employee responses are the goldmine of actionable insights. But the
-            employee data are mostly unstructured and impossible to analyze at scale.{" "}
-            <strong className="font-semibold text-ink">Vocalyze</strong> understands all your
-            employee feedback responses and tells you what matters the most to your employees.
+            Someone types, speaks, or writes a note by hand. Vocalyze reads the same words HR
+            would, then marks what actually matters: a risk to flag, a theme to track, a thing
+            worth celebrating. Drag the slider below to see it happen to real submissions from
+            this demo.
           </p>
         </div>
 

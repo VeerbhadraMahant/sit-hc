@@ -8,10 +8,15 @@ import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { reviewPrivacy, type Action, type Conversation } from "@/lib/closed-loop";
 
 const labels = { planned: "Planned", in_progress: "In progress", completed: "HR completed the action" };
-const outcomeLabel = (action: Action) => action.employee_outcome === "resolved"
-  ? "Employee confirmed it helped" : action.employee_outcome === "still_happening"
-    ? "Employee says it is still happening" : action.status === "completed"
-      ? "Awaiting employee confirmation" : "Employee confirmation opens after completion";
+/** `viewerIsHr` decides whether the employee's own outcome reads in the third person
+ * (HR's view of someone else) or the second person (the employee reading about themselves). */
+const outcomeLabel = (action: Action, viewerIsHr: boolean) => {
+  const who = viewerIsHr ? "Employee" : "You";
+  const verb = viewerIsHr ? "says" : "say";
+  if (action.employee_outcome === "resolved") return `${who} confirmed it helped`;
+  if (action.employee_outcome === "still_happening") return `${who} ${verb} it's still happening`;
+  return action.status === "completed" ? `Awaiting ${viewerIsHr ? "employee" : "your"} confirmation` : `Confirmation opens once this is marked completed`;
+};
 const storageKey = (code: string) => `vocalyze-reply:${code}`;
 
 export function FeedbackConversation({ code, hr = false }: { code: string; hr?: boolean }) {
@@ -95,7 +100,7 @@ export function FeedbackConversation({ code, hr = false }: { code: string; hr?: 
             <p className="text-sm text-pewter">Owner: {data.action.owner} · Due: {data.action.due_date}</p>
             <p className="text-sm font-medium text-ink">{labels[data.action.status]}{data.action.status !== "completed" && data.action.due_date < new Date().toISOString().slice(0, 10) ? " · Overdue" : ""}</p>
             {data.action.evidence && <div><p className="eyebrow">What changed / evidence</p><p className="whitespace-pre-wrap text-sm text-ink">{data.action.evidence}</p></div>}
-            <p className="flex items-center gap-2 rounded-smallcards bg-mist p-3 text-sm font-medium text-ink"><CheckCircle2 className="size-4 shrink-0" />{outcomeLabel(data.action)}</p>
+            <p className="flex items-center gap-2 rounded-smallcards bg-mist p-3 text-sm font-medium text-ink"><CheckCircle2 className="size-4 shrink-0" />{outcomeLabel(data.action, hr)}</p>
             {!hr && data.action.status === "completed" && <div className="space-y-2">
               <p className="text-sm text-ink">Did this action improve the situation? You can update your answer if things change.</p>
               <div className="flex flex-wrap gap-2">
@@ -111,14 +116,14 @@ export function FeedbackConversation({ code, hr = false }: { code: string; hr?: 
           <ol className="mt-3 space-y-3">{data.history.map((event) => <li key={event.id} className="border-l-2 border-edge pl-3">
             <p className="text-xs text-pewter">{new Date(event.created_at).toLocaleString()} · revision {event.snapshot.revision}</p>
             <p className="text-ink">{event.snapshot.title} · {labels[event.snapshot.status]}</p>
-            <p className="text-pewter">{outcomeLabel(event.snapshot)}</p>
+            <p className="text-pewter">{outcomeLabel(event.snapshot, hr)}</p>
           </li>)}</ol>
         </details>}
         <section aria-label="Conversation" className="border-t border-mist pt-4">
           <h3 className="eyebrow mb-3 flex items-center gap-2"><MessageCircle className="size-4" /> Conversation</h3>
           {!data.messages.length && <p className="text-sm text-pewter">No follow-ups yet. Start a conversation to understand the issue and agree on next steps.</p>}
           <ol className="max-h-96 space-y-3 overflow-y-auto">{data.messages.map((message) => <li key={message.id} className={`rounded-smallcards p-4 ${message.author_role === "hr" ? "border border-edge bg-white" : "bg-mist/60"}`}>
-            <p className="mb-1 text-xs text-pewter"><strong>{message.author_role === "hr" ? "People team" : "Employee"}</strong> · {new Date(message.created_at).toLocaleString()}</p>
+            <p className="mb-1 text-xs text-pewter"><strong>{message.author_role === "hr" ? "People team" : hr ? "Employee" : "You"}</strong> · {new Date(message.created_at).toLocaleString()}</p>
             <p className="whitespace-pre-wrap break-words text-sm text-ink">{message.body}</p>
           </li>)}</ol>
           <form className="mt-4 space-y-3" onSubmit={async (e) => {

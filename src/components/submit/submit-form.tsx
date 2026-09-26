@@ -107,7 +107,7 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
       <Card glow="lime" arc>
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="eyebrow">Step 1</p>
+            <p className="eyebrow">Your feedback</p>
             <h2 className="text-heading-sm font-semibold text-ink">What&apos;s on your mind?</h2>
           </div>
           <PillTabs<Mode>
@@ -134,7 +134,7 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
               value={texts.text}
               onChange={(e) => setText("text")(e.target.value)}
               maxLength={MAX}
-              placeholder="Share what's working, what isn't, or an idea. Specific examples help the most. Any language is fine."
+              placeholder="Share what's working, what isn't, or an idea, in your own words. Any language is fine."
               aria-describedby="char-count"
             />
             <p id="char-count" className={cn("mt-2 text-right text-xs tabular-nums", texts.text.length > MAX * 0.9 ? "text-serious" : "text-pewter")}>
@@ -156,7 +156,7 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
       </Card>
 
       <Card>
-        <p className="eyebrow">Step 2</p>
+        <p className="eyebrow">Context</p>
         <h2 className="mb-5 text-heading-sm font-semibold text-ink">A little context (optional)</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -171,7 +171,7 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
           <div>
             <Label htmlFor="category">Type of feedback</Label>
             <Select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">Let AI decide</option>
+              <option value="">We'll figure it out</option>
               {CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
@@ -181,7 +181,7 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
       </Card>
 
       <Card>
-        <p className="eyebrow">Step 3</p>
+        <p className="eyebrow">Anonymity</p>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-heading-sm font-semibold text-ink">Stay anonymous?</h2>
