@@ -447,6 +447,55 @@ export async function getFeedbackDetail(id: string) {
   };
 }
 
+export interface ThemeContext {
+  theme: string;
+  scope: "department" | "org";
+  total: number;
+  positive: number;
+  neutral: number;
+  negative: number;
+  avgSentiment: number | null;
+}
+
+/**
+ * How this feedback item's primary theme is trending elsewhere — same department
+ * first (falls back to org-wide if too few data points), last 60 days, excluding
+ * this item. Lets HR see at a glance whether one complaint is a one-off or a pattern.
+ */
+export async function getThemeContext(theme: string, department: string | null, excludeId: string): Promise<ThemeContext | null> {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - 60 * DAY).toISOString();
+
+  const run = async (scope: "department" | "org") => {
+    let q = supabase
+      .from("feedback")
+      .select("sentiment,sentiment_score")
+      .contains("themes", [theme])
+      .eq("processing_status", "done")
+      .gte("created_at", since)
+      .neq("id", excludeId)
+      .limit(500);
+    if (scope === "department" && department) q = q.eq("department", department);
+    const { data } = await q;
+    return (data ?? []) as { sentiment: string | null; sentiment_score: number | null }[];
+  };
+
+  let rows = department ? await run("department") : [];
+  let scope: "department" | "org" = "department";
+  if (rows.length < 3) {
+    rows = await run("org");
+    scope = "org";
+  }
+  if (rows.length === 0) return null;
+
+  const positive = rows.filter((r) => r.sentiment === "positive").length;
+  const negative = rows.filter((r) => r.sentiment === "negative").length;
+  const neutral = rows.length - positive - negative;
+  const scores = rows.map((r) => r.sentiment_score).filter((s): s is number => s != null);
+
+  return { theme, scope, total: rows.length, positive, neutral, negative, avgSentiment: avg(scores) };
+}
+
 // ── ImpactLoop — Sentiment Recovery Tracking ─────────────────────────────────
 
 export interface ImpactLoopResult {

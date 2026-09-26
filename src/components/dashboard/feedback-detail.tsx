@@ -8,16 +8,29 @@ import { Badge, SentimentBadge, UrgencyBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/field";
+import { BarList } from "@/components/dashboard/charts/bar-list";
 import { formatScore } from "@/components/dashboard/charts/scale";
+import { SentimentGauge } from "@/components/dashboard/charts/sentiment-gauge";
 import { RISK_LABELS, STATUS_LABELS, STATUSES, type FeedbackRow, type FeedbackStatus, type RiskFlag } from "@/lib/types";
 import { cn, formatDate, timeAgo } from "@/lib/utils";
 import { FeedbackConversation } from "@/components/feedback/conversation";
+import type { ThemeContext } from "@/lib/dashboard-data";
 
 type Note = { id: string; created_at: string; author_name: string | null; body: string };
 
 const CHANNEL_LABEL = { text: "Written", voice: "Voice note", ocr: "Scanned document" } as const;
 
-export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { feedback: FeedbackRow; notes: Note[]; closeHref: string }) {
+export function FeedbackDetail({
+  feedback,
+  notes: initialNotes,
+  closeHref,
+  themeContext,
+}: {
+  feedback: FeedbackRow;
+  notes: Note[];
+  closeHref: string;
+  themeContext?: ThemeContext | null;
+}) {
   const [f, setF] = useState(feedback);
   const [notes, setNotes] = useState(initialNotes);
   const [response, setResponse] = useState(feedback.hr_response ?? "");
@@ -107,13 +120,23 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
       </div>
 
       <div className="space-y-6 px-6 py-5">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <UrgencyBadge urgency={f.urgency} />
           <SentimentBadge sentiment={f.sentiment} />
-          {f.sentiment_score != null && <Badge className="tabular-nums">score {formatScore(f.sentiment_score)}</Badge>}
           <Badge>{f.department ?? "No department"}</Badge>
           {f.category && <Badge>{f.category}</Badge>}
         </div>
+
+        {f.sentiment_score != null && (
+          <div className="flex items-center gap-4 rounded-smallcards border border-mist bg-white px-4 py-3">
+            <SentimentGauge score={f.sentiment_score} size={84} />
+            <div>
+              <p className="eyebrow">Sentiment score</p>
+              <p className="text-2xl leading-none font-semibold tabular-nums text-obsidian">{formatScore(f.sentiment_score)}</p>
+              <p className="mt-1 text-xs text-pewter">on a scale of −1 (very negative) to +1 (very positive)</p>
+            </div>
+          </div>
+        )}
 
         {f.processing_status !== "done" && (
           <div className="flex flex-wrap items-center gap-3 rounded-smallcards border border-mist bg-white p-4 text-sm">
@@ -205,6 +228,26 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
             </dd>
           </div>
         </dl>
+
+        {themeContext && themeContext.total > 0 && (
+          <div className="rounded-smallcards border border-mist bg-white p-4">
+            <p className="eyebrow">
+              {themeContext.theme} · last 60 days{themeContext.scope === "department" ? ` · ${f.department}` : " · all departments"}
+            </p>
+            <p className="mt-1 mb-3 text-sm text-ink">
+              <span className="font-semibold">{themeContext.total}</span> other {themeContext.total === 1 ? "item mentions" : "items mention"}{" "}
+              this theme{themeContext.avgSentiment != null && <> — average sentiment {formatScore(themeContext.avgSentiment)}</>}
+            </p>
+            <BarList
+              items={[
+                { label: "Positive", value: themeContext.positive, color: "var(--viz-positive)" },
+                { label: "Neutral / mixed", value: themeContext.neutral, color: "var(--viz-neutral)" },
+                { label: "Negative", value: themeContext.negative, color: "var(--viz-negative)" },
+              ]}
+              max={themeContext.total}
+            />
+          </div>
+        )}
 
         {f.suggested_action && (
           <div className="rounded-smallcards bg-mint-tint/60 p-4">

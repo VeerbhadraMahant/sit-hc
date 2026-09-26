@@ -7,6 +7,7 @@ import { SentimentBadge, UrgencyBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   getFeedbackDetail,
+  getThemeContext,
   INBOX_PAGE_SIZE,
   listFeedbackPage,
   readFilters,
@@ -161,7 +162,11 @@ async function DetailPanel({ id, closeHref }: { id: string; closeHref: string })
       </Card>
     );
   }
-  return <FeedbackDetail key={detail.feedback.id} feedback={detail.feedback} notes={detail.notes} closeHref={closeHref} />;
+  const topTheme = detail.feedback.themes?.[0] ?? null;
+  const themeContext = topTheme ? await getThemeContext(topTheme, detail.feedback.department, detail.feedback.id) : null;
+  return (
+    <FeedbackDetail key={detail.feedback.id} feedback={detail.feedback} notes={detail.notes} closeHref={closeHref} themeContext={themeContext} />
+  );
 }
 
 function FeedbackListItem({ f, href, active }: { f: ListRow; href: string; active: boolean }) {
