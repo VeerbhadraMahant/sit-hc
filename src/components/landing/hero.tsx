@@ -9,7 +9,7 @@ export function Hero() {
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-14 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pt-24 lg:pb-28">
         <div>
           <p className="eyebrow">AI-powered employee listening</p>
-          <h1 className="mt-4 text-[44px] leading-[0.95] font-semibold tracking-[-1.8px] text-obsidian sm:text-display-sm lg:text-[72px] lg:tracking-[-3.2px]">
+          <h1 className="mt-4 text-[44px] leading-[1.1] font-semibold tracking-[-1.8px] text-obsidian sm:text-display-sm sm:leading-[1.08] lg:text-[72px] lg:leading-[1.08] lg:tracking-[-3.2px]">
             Every <span className="brush">voice</span> heard.
             <br />
             Every theme <span className="brush">acted</span> on.

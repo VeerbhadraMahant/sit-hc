@@ -97,16 +97,16 @@
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   --text-display: 80px;
-  --text-display--line-height: 0.9;
+  --text-display--line-height: 1.05;
   --text-display--letter-spacing: -3.6px;
   --text-display-sm: 56px;
-  --text-display-sm--line-height: 0.95;
+  --text-display-sm--line-height: 1.05;
   --text-display-sm--letter-spacing: -2.4px;
   --text-heading: 48px;
-  --text-heading--line-height: 1;
+  --text-heading--line-height: 1.1;
   --text-heading--letter-spacing: -1px;
   --text-heading-md: 32px;
-  --text-heading-md--line-height: 1.1;
+  --text-heading-md--line-height: 1.15;
   --text-heading-md--letter-spacing: -0.6px;
   --text-heading-sm: 22px;
   --text-heading-sm--line-height: 1.43;
@@ -177,9 +177,9 @@ body {
   .brush::after {
     content: "";
     position: absolute;
-    left: 20%;
-    width: 60%;
-    bottom: -4px;
+    left: 15%;
+    width: 70%;
+    bottom: 2px;
     height: 3px;
     border-radius: 3px;
     background: var(--gradient-brushstroke);

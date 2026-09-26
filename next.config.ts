@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   experimental: {
     // Reuse client-cached dynamic pages for 30s so switching dashboard tabs doesn't re-render on the server.
     // Mutations that must show immediately call router.refresh() / revalidatePath().
