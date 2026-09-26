@@ -126,8 +126,8 @@ export function LoginPanel({
 function EmployeeSignIn({ next, onError }: { next: string | null; onError: (m: string | null) => void }) {
   const router = useRouter();
   const isDemo = !process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const [email, setEmail] = useState(isDemo ? "alex@vocalyze.internal" : "");
-  const [password, setPassword] = useState(isDemo ? "demo1234" : "");
+  const [email, setEmail] = useState(isDemo ? "developer_employee@vocalyze.demo" : "");
+  const [password, setPassword] = useState(isDemo ? "Judge-Employee-2026!" : "");
   const [usePassword, setUsePassword] = useState(isDemo ? true : false);
   const [busy, setBusy] = useState<"google" | "link" | "password" | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -248,7 +248,7 @@ function EmployeeSignIn({ next, onError }: { next: string | null; onError: (m: s
         <div className="mt-4 rounded-smallcards border border-edge bg-mist/60 p-3 text-xs text-ink">
           <p className="font-semibold text-obsidian">Demo Mode Active</p>
           <p className="mt-0.5 text-pewter">
-            No remote Supabase credentials detected. Click &ldquo;Sign in&rdquo; to access the employee portal in demo mode.
+            Sign in with <span className="font-mono text-ink">developer_employee@vocalyze.demo</span> / <span className="font-mono text-ink">Judge-Employee-2026!</span> (pre-filled) to access the employee portal.
           </p>
         </div>
       )}
@@ -314,8 +314,8 @@ function EmployeeSignIn({ next, onError }: { next: string | null; onError: (m: s
 function HrSignIn({ next, onError }: { next: string | null; onError: (m: string | null) => void }) {
   const router = useRouter();
   const isDemo = !process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const [email, setEmail] = useState(isDemo ? "hr@vocalyze.internal" : "");
-  const [password, setPassword] = useState(isDemo ? "demo1234" : "");
+  const [email, setEmail] = useState(isDemo ? "developer_hr@vocalyze.demo" : "");
+  const [password, setPassword] = useState(isDemo ? "Judge-HR-2026!" : "");
   const [busy, setBusy] = useState<"password" | "google" | null>(null);
   const hrNext = next?.startsWith("/dashboard") ? next : "/dashboard";
 
@@ -373,7 +373,7 @@ function HrSignIn({ next, onError }: { next: string | null; onError: (m: string 
         <div className="mt-4 rounded-smallcards border border-edge bg-mist/60 p-3 text-xs text-ink">
           <p className="font-semibold text-obsidian">Demo Mode Active</p>
           <p className="mt-0.5 text-pewter">
-            No remote Supabase credentials detected. Click &ldquo;Sign in&rdquo; to access the full HR console in demo mode.
+            Sign in with <span className="font-mono text-ink">developer_hr@vocalyze.demo</span> / <span className="font-mono text-ink">Judge-HR-2026!</span> (pre-filled) to access the full HR console.
           </p>
         </div>
       )}

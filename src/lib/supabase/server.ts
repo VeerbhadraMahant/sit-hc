@@ -30,7 +30,7 @@ export const getHrUser = cache(async (): Promise<HrUser | null> => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return {
       id: "demo-hr-user",
-      email: "hr@vocalyze.internal",
+      email: "developer_hr@vocalyze.demo",
       fullName: "Priya Sharma",
       role: "admin",
     };
@@ -93,7 +93,7 @@ export const getEmployeeUser = cache(async (): Promise<EmployeeUser | null> => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return {
       id: "demo-employee-user",
-      email: "alex@vocalyze.internal",
+      email: "developer_employee@vocalyze.demo",
       fullName: "Alex Rivera",
       department: "Engineering",
       avatarUrl: null,
