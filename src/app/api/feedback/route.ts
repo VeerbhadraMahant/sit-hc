@@ -1,5 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
+import { hashReplyKey } from "@/lib/conversation-server";
 import { emailLayout, escapeHtml, sendEmail } from "@/lib/email";
 import { createFeedback, processFeedback } from "@/lib/pipeline";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
@@ -45,6 +47,7 @@ export async function POST(req: Request) {
   const session = await getSessionClaims();
   const email = body.isAnonymous ? null : body.email || session?.email || null;
   const name = body.isAnonymous ? null : body.name || null;
+  const replyKey = randomBytes(32).toString("hex");
 
   let result: Awaited<ReturnType<typeof createFeedback>>;
   try {
@@ -60,6 +63,7 @@ export async function POST(req: Request) {
       submitterUserId: session?.id ?? null,
       language: body.language,
       analyze: "background",
+      replyTokenHash: hashReplyKey(replyKey),
     });
   } catch (err) {
     console.error("[api/feedback]", err);
@@ -90,5 +94,5 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json({ trackingCode, summary: null, themes: [], processing_status: "pending", linked: !!session });
+  return NextResponse.json({ trackingCode, replyKey, summary: null, themes: [], processing_status: "pending", linked: !!session }, { headers: { "Cache-Control": "no-store" } });
 }

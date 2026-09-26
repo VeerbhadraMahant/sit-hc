@@ -77,7 +77,6 @@ export interface FeedbackRow {
   tracking_code: string;
   channel: "text" | "voice";
   language: string | null;
-  raw_text: string | null;
   redacted_text: string | null;
   department: string | null;
   category: string | null;
@@ -101,7 +100,7 @@ export interface FeedbackRow {
 
 /** Columns safe to select for the HR dashboard (no embeddings). */
 export const FEEDBACK_COLUMNS =
-  "id,created_at,tracking_code,channel,language,raw_text,redacted_text,department,category,is_anonymous,submitter_name,submitter_email,status,hr_response,responded_at,processing_status,processing_error,sentiment,sentiment_score,emotions,themes,summary,urgency,risk_flags,suggested_action";
+  "id,created_at,tracking_code,channel,language,redacted_text,department,category,is_anonymous,submitter_name,submitter_email,status,hr_response,responded_at,processing_status,processing_error,sentiment,sentiment_score,emotions,themes,summary,urgency,risk_flags,suggested_action";
 
 export interface InsightReport {
   id: string;

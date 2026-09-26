@@ -14,6 +14,7 @@ import { getHrUser } from "@/lib/supabase/server";
 import { RISK_LABELS, type RiskFlag } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
 import { Suspense } from "react";
+import { OutcomeCard } from "@/components/dashboard/outcome-card";
 
 export const metadata = { title: "Overview — Vocalyze HR" };
 
@@ -45,6 +46,7 @@ export default async function OverviewPage({
 
   return (
     <div className="space-y-6">
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-cards bg-mist" />}><OutcomeCard /></Suspense>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Overview · last {period} days</p>

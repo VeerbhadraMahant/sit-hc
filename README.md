@@ -12,6 +12,17 @@
 
 ---
 
+### Anonymous Conversations & Proof of Action
+- **Private employee–HR follow-up threads**: Accessible through account ownership or a separate guest reply key.
+- **Local privacy review**: Editable suggestions for common identifying details before employee replies.
+- **HR action commitments**: Owners, deadlines, and completion evidence.
+- **Employee confirmation**: “Yes, it helped” or “Still happening”, shown separately from HR completion on the dashboard.
+- **Action history**: Preserves earlier commitments and confirmations.
+
+See [setup, privacy limits, and the three-minute demo](docs/CLOSED_LOOP_DEMO.md).
+
+---
+
 ## Overview
 
 ### The Problem
@@ -370,8 +381,11 @@ npm run db -- --file supabase/migrations/0001_init.sql
 
 # Execute schema migration 2 (Portal, check-ins, surveys, k>=5 aggregates)
 npm run db -- --file supabase/migrations/0002_employee_portal.sql
+
+# Execute schema migration 3 (Closed-loop conversations and action proof)
+npm run db -- --file supabase/migrations/0003_closed_loop.sql
 ```
-*(Alternatively, copy and paste both files into the Supabase Web SQL Editor).*
+*(Alternatively, copy and paste the SQL files into the Supabase Web SQL Editor).*
 
 ### 4. Bootstrap Administrative Users & Seed Demo Data
 ```bash
@@ -512,7 +526,7 @@ The codebase includes automated unit testing, type checking, and linting suites:
 # Run TypeScript compilation check
 npm run typecheck
 
-# Execute unit test suites (schemas, AI survey aggregation)
+# Execute unit test suites (schemas, AI survey aggregation, closed-loop)
 npm run test
 
 # Run ESLint validation

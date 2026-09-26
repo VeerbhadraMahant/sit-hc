@@ -10,12 +10,13 @@ import { Card } from "@/components/ui/card";
 import { STATUSES, STATUS_LABELS, type FeedbackStatus } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 import { lookupFeedback, normalizeCode } from "../lookup";
+import { FeedbackConversation } from "@/components/feedback/conversation";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Feedback status — Vocalyze", robots: { index: false } };
 
 const STATUS_HINTS: Record<FeedbackStatus, string> = {
-  new: "Your feedback is safely stored and has been analysed.",
+  new: "Your feedback has been received for processing and review.",
   in_review: "The People team is reviewing it alongside related feedback.",
   actioned: "Action has been taken in response.",
   closed: "This item is closed. Thank you for speaking up.",
@@ -125,6 +126,8 @@ export default async function TrackCodePage({ params }: { params: Promise<{ code
             )}
           </Card>
         </div>
+
+        <FeedbackConversation code={code} />
 
         <div className="mt-10 flex flex-wrap gap-3">
           <ButtonLink href="/submit" variant="dark">

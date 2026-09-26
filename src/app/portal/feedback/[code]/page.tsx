@@ -10,6 +10,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireEmployee } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import { FeedbackConversation } from "@/components/feedback/conversation";
 
 export const metadata: Metadata = { title: "Feedback — Vocalyze" };
 
@@ -63,12 +64,12 @@ export default async function MyFeedbackDetail({ params }: { params: Promise<{ c
           <p className="leading-relaxed text-ink">
             {fb.summary ??
               (fb.processing_status === "failed"
-                ? "Your feedback is saved. Our summary isn't available yet — HR can still read it."
+                ? "Your feedback is saved privately. Analysis will need to be retried before HR can read the processed text."
                 : "Your feedback is being analysed. Check back shortly.")}
           </p>
           {fb.is_anonymous && (
             <p className="mt-4 text-xs text-pewter">
-              HR sees a redacted English version of your words — never your name or this link to your account.
+              Your account details are hidden from HR. AI attempts to remove identifying details from the original feedback, but unique events or wording may still identify you.
             </p>
           )}
         </Card>
@@ -94,6 +95,8 @@ export default async function MyFeedbackDetail({ params }: { params: Promise<{ c
           )}
         </Card>
       </div>
+
+      <FeedbackConversation code={fb.tracking_code} />
 
       <div className="mt-10">
         <ButtonLink href="/portal/feedback/new" variant="dark">
