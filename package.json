@@ -14,7 +14,8 @@
     "test": "vitest run",
     "create-employee": "node scripts/create-employee.mjs",
     "seed:portal": "tsx scripts/seed-portal.ts",
-    "screenshots": "tsx scripts/screenshots.ts"
+    "screenshots": "tsx scripts/screenshots.ts",
+    "create-dev-logins": "node scripts/create-dev-logins.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
