@@ -13,7 +13,7 @@ const GRID = [
   [0.2, 0.3, 0.5, 0.1, 0.6],
 ];
 
-/** Diverging blue ↔ red with a gray midpoint (see docs/DESIGN.md → Data viz). */
+/** Diverging blue <-> red with a gray midpoint (see docs/DESIGN.md -> Data viz). */
 function cellColor(v: number) {
   const a = Math.min(1, Math.abs(v) / 0.8);
   const pole = v >= 0 ? "42, 120, 214" : "227, 73, 72";

@@ -14,20 +14,49 @@ export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElem
   );
 }
 
-export const urgencyMeta: Record<Urgency, { label: string; color: string; Icon: typeof Info }> = {
-  low: { label: "Low", color: "var(--status-good)", Icon: CircleCheck },
-  medium: { label: "Medium", color: "var(--status-warning)", Icon: Info },
-  high: { label: "High", color: "var(--status-serious)", Icon: AlertTriangle },
-  critical: { label: "Critical", color: "var(--status-critical)", Icon: AlertOctagon },
+export const urgencyMeta: Record<
+  Urgency,
+  { label: string; color: string; Icon: typeof Info; badgeCls: string }
+> = {
+  low: {
+    label: "Low",
+    color: "var(--status-good)",
+    Icon: CircleCheck,
+    badgeCls: "bg-emerald-500/10 text-emerald-800 border-emerald-200/90",
+  },
+  medium: {
+    label: "Medium",
+    color: "var(--status-warning)",
+    Icon: Info,
+    badgeCls: "bg-amber-500/10 text-amber-900 border-amber-200/90",
+  },
+  high: {
+    label: "High",
+    color: "var(--status-serious)",
+    Icon: AlertTriangle,
+    badgeCls: "bg-orange-500/10 text-orange-950 border-orange-300 font-medium",
+  },
+  critical: {
+    label: "Critical",
+    color: "var(--status-critical)",
+    Icon: AlertOctagon,
+    badgeCls: "bg-red-500/10 text-[#d03b3b] border-red-300 font-semibold shadow-xs",
+  },
 };
 
 export function UrgencyBadge({ urgency, className }: { urgency: Urgency | null; className?: string }) {
   if (!urgency) return <Badge className={cn("text-pewter", className)}>Pending</Badge>;
-  const { label, color, Icon } = urgencyMeta[urgency];
+  const { label, color, Icon, badgeCls } = urgencyMeta[urgency];
   return (
-    <Badge className={className}>
+    <Badge className={cn(badgeCls, className)}>
       <Icon className="size-3.5" style={{ color }} aria-hidden />
       {label}
+      {urgency === "critical" && (
+        <span className="relative ml-0.5 flex size-1.5" aria-hidden>
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-[#d03b3b]" />
+        </span>
+      )}
     </Badge>
   );
 }

@@ -86,6 +86,37 @@ export default async function OverviewPage({
         </Card>
       ) : (
         <>
+          {kpis.openUrgent > 0 && (
+            <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-cards border border-red-200/90 bg-gradient-to-r from-red-500/[0.08] via-red-500/[0.03] to-paper p-4.5 shadow-sm arc glow-critical">
+              <div className="flex items-center gap-3.5">
+                <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-[#d03b3b] ring-1 ring-red-500/25">
+                  <AlertOctagon className="size-5" aria-hidden />
+                  <span className="absolute -top-0.5 -right-0.5 flex size-2.5" aria-hidden>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex size-2.5 rounded-full bg-[#d03b3b]" />
+                  </span>
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-[#a82323]">Critical Attention Required</h2>
+                    <span className="inline-flex items-center rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-[#d03b3b]">
+                      {kpis.openUrgent} open items
+                    </span>
+                  </div>
+                  <p className="text-xs text-graphite mt-0.5">
+                    High-urgency feedback detected (safety violations, severe burnout, ethics risks). Immediate HR review recommended.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/feedback?urgency=critical"
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-buttons bg-[#d03b3b] px-4 text-xs font-medium text-white shadow-xs hover:bg-[#b52a2a] transition-colors"
+              >
+                Review Urgent Queue <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
+            </div>
+          )}
+
           <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Key metrics">
             <StatTile
               label="Feedback received"
@@ -104,15 +135,15 @@ export default async function OverviewPage({
             <StatTile
               label="Urgent & open"
               value={
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 text-[#d03b3b]">
                   {kpis.openUrgent}
                   {kpis.openUrgent > 0 && (
                     <AlertOctagon className="size-7" style={{ color: "var(--status-critical)" }} aria-label="Needs attention" />
                   )}
                 </span>
               }
-              glow="orchid"
-              sub={<span>critical + high, not yet actioned</span>}
+              glow={kpis.openUrgent > 0 ? "critical" : "orchid"}
+              sub={<span className={cn(kpis.openUrgent > 0 ? "text-[#a82323] font-medium" : "")}>critical + high, not yet actioned</span>}
             />
             <StatTile
               label="Response rate"
@@ -134,30 +165,34 @@ export default async function OverviewPage({
               <SentimentTrendLazy data={o.weekly} />
             </Card>
 
-            <Card className="flex flex-col">
+            <Card glow="critical" arc className="flex flex-col border border-red-200/80 bg-gradient-to-b from-red-500/[0.04] to-paper">
               <CardHeader
-                eyebrow="Needs attention"
-                title="Urgent & unresolved"
+                eyebrow="Needs immediate attention"
+                title={
+                  <span className="flex items-center gap-2 text-obsidian">
+                    <AlertOctagon className="size-5 text-[#d03b3b]" aria-hidden /> Urgent & unresolved
+                  </span>
+                }
                 action={
-                  <Link href="/dashboard/feedback?urgency=critical" className="text-sm font-medium text-cobalt hover:underline">
-                    View all
+                  <Link href="/dashboard/feedback?urgency=critical" className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-[#d03b3b] hover:bg-red-500/20 transition-colors">
+                    View all ({o.needsAttention.length}) <ArrowRight className="size-3" aria-hidden />
                   </Link>
                 }
               />
               {o.needsAttention.length === 0 ? (
                 <p className="text-pewter">Nothing urgent is waiting. Nice.</p>
               ) : (
-                <ul className="-mx-2 flex-1 space-y-1">
+                <ul className="-mx-2 flex-1 space-y-1.5">
                   {o.needsAttention.map((f) => (
                     <li key={f.id}>
-                      <Link href={`/dashboard/feedback?id=${f.id}`} className="block rounded-smallcards px-2 py-2.5 hover:bg-mist/70">
+                      <Link href={`/dashboard/feedback?id=${f.id}`} className="block rounded-smallcards border-l-2 border-l-[#d03b3b] bg-red-500/[0.03] px-3 py-2.5 hover:bg-red-500/[0.08] transition-colors">
                         <div className="flex items-center gap-2">
                           <UrgencyBadge urgency={f.urgency} />
-                          <span className="truncate text-xs text-pewter">
+                          <span className="truncate text-xs font-medium text-graphite">
                             {f.department ?? "Unspecified"} · {timeAgo(f.created_at)}
                           </span>
                         </div>
-                        <p className="mt-1 line-clamp-2 text-sm text-ink">{f.summary ?? "Awaiting analysis"}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-ink font-medium">{f.summary ?? "Awaiting analysis"}</p>
                       </Link>
                     </li>
                   ))}

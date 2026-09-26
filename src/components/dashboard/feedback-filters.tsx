@@ -35,6 +35,23 @@ const FILTERS = [
   },
 ] as const;
 
+interface QuickTab {
+  label: string;
+  key: string;
+  params: Record<string, string>;
+  isCritical?: boolean;
+  isWarning?: boolean;
+}
+
+const QUICK_TABS: QuickTab[] = [
+  { label: "All Items", key: "all", params: {} },
+  { label: "Critical Priority", key: "critical", params: { urgency: "critical" }, isCritical: true },
+  { label: "High Urgency", key: "high", params: { urgency: "high" }, isWarning: true },
+  { label: "Unresolved", key: "new", params: { status: "new" } },
+  { label: "Workplace Safety", key: "safety", params: { theme: "Workplace Safety" } },
+  { label: "Action Taken", key: "actioned", params: { status: "actioned" } },
+];
+
 export function FeedbackFiltersBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -61,7 +78,62 @@ export function FeedbackFiltersBar() {
   const active = FILTERS.some((f) => params.get(f.key)) || !!params.get("q");
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
+    <div className="space-y-2.5">
+      {/* Quick Triage Priority Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-0.5">
+        {QUICK_TABS.map((tab) => {
+          const isSelected =
+            tab.key === "all"
+              ? !params.get("urgency") && !params.get("status") && !params.get("theme")
+              : Object.entries(tab.params).every(([k, v]) => params.get(k) === v);
+
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(params.toString());
+                next.delete("urgency");
+                next.delete("status");
+                next.delete("theme");
+                next.delete("page");
+                next.delete("id");
+                Object.entries(tab.params).forEach(([k, v]) => next.set(k, v));
+                startTransition(() => router.replace(`${pathname}?${next.toString()}`, { scroll: false }));
+              }}
+              className={cn(
+                "inline-flex h-8.5 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium transition-all cursor-pointer whitespace-nowrap",
+                tab.isCritical
+                  ? isSelected
+                    ? "bg-[#d03b3b] text-white shadow-xs font-semibold"
+                    : "border border-red-200/90 bg-red-500/[0.07] text-[#d03b3b] hover:bg-red-500/15"
+                  : tab.isWarning
+                  ? isSelected
+                    ? "bg-amber-600 text-white shadow-xs font-semibold"
+                    : "border border-amber-200/90 bg-amber-500/[0.08] text-amber-900 hover:bg-amber-500/15"
+                  : isSelected
+                  ? "bg-carbon text-paper shadow-xs font-semibold"
+                  : "border border-mist bg-paper text-ink hover:bg-mist",
+              )}
+            >
+              {tab.isCritical && (
+                <span className="relative flex size-2 shrink-0" aria-hidden>
+                  <span
+                    className={cn(
+                      "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+                      isSelected ? "bg-white" : "bg-red-400",
+                    )}
+                  />
+                  <span className={cn("relative inline-flex size-2 rounded-full", isSelected ? "bg-white" : "bg-[#d03b3b]")} />
+                </span>
+              )}
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
       <label className="relative min-w-56 flex-1 sm:max-w-xs">
         <span className="sr-only">Search feedback</span>
         <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-pewter" aria-hidden />
@@ -100,6 +172,7 @@ export function FeedbackFiltersBar() {
           <X className="size-4" aria-hidden /> Clear
         </button>
       )}
+      </div>
     </div>
   );
 }

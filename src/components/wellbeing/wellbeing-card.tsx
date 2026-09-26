@@ -1,4 +1,4 @@
-import { EyeOff, HeartPulse } from "lucide-react";
+import { EyeOff, HeartPulse, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { getWellbeing, type WellbeingRow } from "./data";
@@ -69,8 +69,16 @@ function Metric({ label, value, delta }: { label: string; value: number; delta?:
         {value.toFixed(1)}
         <span className="text-sm font-normal text-pewter">/5</span>
         {delta !== undefined && delta !== null && Math.abs(delta) >= 0.05 && (
-          <span className="ml-2 text-sm font-medium" style={{ color: delta > 0 ? "#006300" : "var(--status-critical)" }}>
-            {delta > 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)}
+          <span
+            className="ml-2 inline-flex items-center gap-1 text-sm font-medium"
+            style={{ color: delta > 0 ? "#006300" : "var(--status-critical)" }}
+          >
+            {delta > 0 ? (
+              <TrendingUp className="size-3.5" aria-hidden />
+            ) : (
+              <TrendingDown className="size-3.5" aria-hidden />
+            )}
+            <span>{Math.abs(delta).toFixed(1)}</span>
           </span>
         )}
       </p>

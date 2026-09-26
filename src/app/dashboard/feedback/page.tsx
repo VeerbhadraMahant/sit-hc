@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ChevronLeft, ChevronRight, Download, FileText, Inbox, Mic, ScanText } from "lucide-react";
+import { AlertOctagon, ChevronLeft, ChevronRight, Download, FileText, Inbox, Mic, ScanText } from "lucide-react";
 import Link from "next/link";
 import { FeedbackDetail } from "@/components/dashboard/feedback-detail";
 import { FeedbackFiltersBar } from "@/components/dashboard/feedback-filters";
@@ -13,7 +13,7 @@ import {
   type FeedbackFilters,
   type ListRow,
 } from "@/lib/dashboard-data";
-import { STATUS_LABELS } from "@/lib/types";
+import { RISK_LABELS, STATUS_LABELS, type RiskFlag } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
 
 export const metadata = { title: "Feedback — Vocalyze HR" };
@@ -166,6 +166,9 @@ async function DetailPanel({ id, closeHref }: { id: string; closeHref: string })
 
 function FeedbackListItem({ f, href, active }: { f: ListRow; href: string; active: boolean }) {
   const Icon = CHANNEL_ICON[f.channel as keyof typeof CHANNEL_ICON] ?? FileText;
+  const isCritical = f.urgency === "critical";
+  const isHigh = f.urgency === "high";
+
   return (
     <li>
       <Link
@@ -173,7 +176,12 @@ function FeedbackListItem({ f, href, active }: { f: ListRow; href: string; activ
         scroll={false}
         aria-current={active ? "true" : undefined}
         className={cn(
-          "relative block px-5 py-4 transition-colors hover:bg-mist/50",
+          "relative block px-5 py-4 transition-colors",
+          isCritical
+            ? "border-l-[3px] border-l-[#d03b3b] bg-red-500/[0.04] hover:bg-red-500/[0.08]"
+            : isHigh
+            ? "border-l-[3px] border-l-amber-500 bg-amber-500/[0.02] hover:bg-amber-500/[0.06]"
+            : "hover:bg-mist/50",
           active && "bg-mist/70 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-cobalt",
         )}
       >
@@ -188,15 +196,24 @@ function FeedbackListItem({ f, href, active }: { f: ListRow; href: string; activ
             {timeAgo(f.created_at)}
           </span>
         </div>
-        <p className="mt-2 line-clamp-2 text-[15px] leading-snug text-ink">
+        <p className="mt-2 line-clamp-2 text-[15px] leading-snug text-ink font-medium">
           {f.summary ?? (f.processing_status === "failed" ? "Analysis failed — open to retry" : "Analyzing…")}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-pewter">
-          <span className="font-medium text-graphite">{f.department ?? "Unspecified"}</span>
+          <span className="font-semibold text-graphite">{f.department ?? "Unspecified"}</span>
           {(f.themes ?? []).slice(0, 2).map((t) => (
             <span key={t}>#{t}</span>
           ))}
-          <span className="ml-auto">{STATUS_LABELS[f.status]}</span>
+          {(f.risk_flags ?? []).map((r) => (
+            <span
+              key={r}
+              className="inline-flex items-center gap-1 rounded-full border border-red-200/90 bg-red-500/10 px-2 py-0.2 text-[11px] font-semibold text-[#d03b3b]"
+            >
+              <AlertOctagon className="size-3" aria-hidden />
+              {RISK_LABELS[r as RiskFlag] ?? r}
+            </span>
+          ))}
+          <span className="ml-auto font-medium text-graphite">{STATUS_LABELS[f.status]}</span>
         </div>
       </Link>
     </li>

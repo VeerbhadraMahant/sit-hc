@@ -12,14 +12,27 @@ export const metadata: Metadata = { title: "Wellbeing check-in — Vocalyze" };
 
 export default async function CheckinPage() {
   const user = await requireEmployee();
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("checkins")
-    .select("id,created_at,week,mood,energy,note")
-    .eq("user_id", user.id)
-    .order("week", { ascending: false })
-    .limit(12);
-  const items = (data ?? []) as CheckIn[];
+  let items: CheckIn[] = [];
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    try {
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("checkins")
+        .select("id,created_at,week,mood,energy,note")
+        .eq("user_id", user.id)
+        .order("week", { ascending: false })
+        .limit(12);
+      items = (data ?? []) as CheckIn[];
+    } catch {
+      items = [];
+    }
+  } else {
+    items = [
+      { id: "demo-chk-1", created_at: new Date().toISOString(), week: isoWeekStart(), mood: 4, energy: 3, note: "Good week overall." },
+      { id: "demo-chk-2", created_at: new Date(Date.now() - 7 * 86400000).toISOString(), week: "2026-03-16", mood: 3, energy: 4, note: null },
+      { id: "demo-chk-3", created_at: new Date(Date.now() - 14 * 86400000).toISOString(), week: "2026-03-09", mood: 5, energy: 4, note: null },
+    ];
+  }
   const week = isoWeekStart();
   const current = items.find((c) => c.week === week) ?? null;
   const avgMood = items.length ? items.reduce((s, c) => s + c.mood, 0) / items.length : null;

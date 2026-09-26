@@ -209,6 +209,7 @@ body {
   .glow-mint { --glow: 25, 247, 154; --arc: var(--gradient-mint-pulse); }
   .glow-amber { --glow: 255, 198, 80; --arc: var(--gradient-amber-glow); }
   .glow-citron { --glow: 229, 237, 56; --arc: var(--gradient-citron-wave); }
+  .glow-critical { --glow: 208, 59, 59; --arc: linear-gradient(90deg, #d03b3b 0%, #ec835a 100%); }
 }
 
 @keyframes pulse-ring {

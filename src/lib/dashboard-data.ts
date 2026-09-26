@@ -102,29 +102,52 @@ export type AggRow = Pick<
   | "summary"
 >;
 
+import {
+  getDemoAggRows,
+  getDemoPreviousScores,
+  getDemoFeedbackPage,
+  getDemoFeedbackDetail,
+} from "@/lib/demo-fallback";
+
 async function fetchAggRows(sinceIso: string): Promise<AggRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("feedback")
-    .select(AGG_COLUMNS)
-    .gte("created_at", sinceIso)
-    .order("created_at", { ascending: false })
-    .limit(5000);
-  if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as AggRow[];
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return getDemoAggRows(sinceIso);
+  }
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("feedback")
+      .select(AGG_COLUMNS)
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(5000);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as AggRow[];
+  } catch (err) {
+    console.warn("fetchAggRows falling back to demo seed data:", err);
+    return getDemoAggRows(sinceIso);
+  }
 }
 
 /** The previous period only feeds two KPI deltas: row count and average sentiment. */
 async function fetchPreviousScores(fromIso: string, toIso: string): Promise<(number | null)[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("feedback")
-    .select("sentiment_score")
-    .gte("created_at", fromIso)
-    .lt("created_at", toIso)
-    .limit(5000);
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as { sentiment_score: number | null }[]).map((r) => r.sentiment_score);
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return getDemoPreviousScores(fromIso, toIso);
+  }
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("feedback")
+      .select("sentiment_score")
+      .gte("created_at", fromIso)
+      .lt("created_at", toIso)
+      .limit(5000);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as { sentiment_score: number | null }[]).map((r) => r.sentiment_score);
+  } catch (err) {
+    console.warn("fetchPreviousScores falling back to demo seed data:", err);
+    return getDemoPreviousScores(fromIso, toIso);
+  }
 }
 
 function countBy<T>(items: T[], key: (t: T) => string[] | string | null | undefined) {
@@ -330,7 +353,7 @@ export async function listFeedback(f: FeedbackFilters, limit = 500): Promise<Fee
 
 export const INBOX_PAGE_SIZE = 100;
 
-const LIST_COLUMNS = "id,created_at,tracking_code,channel,urgency,sentiment,processing_status,summary,department,themes,status";
+const LIST_COLUMNS = "id,created_at,tracking_code,channel,urgency,sentiment,processing_status,summary,department,themes,status,risk_flags";
 
 export type ListRow = Pick<
   FeedbackRow,
@@ -345,6 +368,7 @@ export type ListRow = Pick<
   | "department"
   | "themes"
   | "status"
+  | "risk_flags"
 >;
 
 /** One inbox page with only the columns the list renders (keeps the RSC payload small). */
@@ -352,35 +376,51 @@ export async function listFeedbackPage(
   f: FeedbackFilters,
   page = 1,
 ): Promise<{ rows: ListRow[]; total: number; page: number; hasMore: boolean }> {
-  const supabase = await createClient();
-  const safePage = Math.max(1, Math.floor(page) || 1);
-  const from = (safePage - 1) * INBOX_PAGE_SIZE;
-  const q = applyFilters(
-    supabase
-      .from("feedback")
-      .select(LIST_COLUMNS, { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(from, from + INBOX_PAGE_SIZE - 1),
-    f,
-  );
-  const { data, error, count } = await q;
-  if (error) throw new Error(error.message);
-  const total = count ?? 0;
-  return { rows: (data ?? []) as unknown as ListRow[], total, page: safePage, hasMore: from + INBOX_PAGE_SIZE < total };
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return getDemoFeedbackPage(f, page, INBOX_PAGE_SIZE);
+  }
+  try {
+    const supabase = await createClient();
+    const safePage = Math.max(1, Math.floor(page) || 1);
+    const from = (safePage - 1) * INBOX_PAGE_SIZE;
+    const q = applyFilters(
+      supabase
+        .from("feedback")
+        .select(LIST_COLUMNS, { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, from + INBOX_PAGE_SIZE - 1),
+      f,
+    );
+    const { data, error, count } = await q;
+    if (error) throw new Error(error.message);
+    const total = count ?? 0;
+    return { rows: (data ?? []) as unknown as ListRow[], total, page: safePage, hasMore: from + INBOX_PAGE_SIZE < total };
+  } catch (err) {
+    console.warn("listFeedbackPage falling back to demo seed data:", err);
+    return getDemoFeedbackPage(f, page, INBOX_PAGE_SIZE);
+  }
 }
 
 export async function getFeedbackDetail(id: string) {
-  const supabase = await createClient();
-  const [{ data: fb }, { data: notes }] = await Promise.all([
-    supabase.from("feedback").select(FEEDBACK_COLUMNS).eq("id", id).maybeSingle(),
-    supabase
-      .from("feedback_notes")
-      .select("id,created_at,author_name,body")
-      .eq("feedback_id", id)
-      .order("created_at", { ascending: true }),
-  ]);
-  return {
-    feedback: (fb ?? null) as unknown as FeedbackRow | null,
-    notes: (notes ?? []) as { id: string; created_at: string; author_name: string | null; body: string }[],
-  };
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return getDemoFeedbackDetail(id);
+  }
+  try {
+    const supabase = await createClient();
+    const [{ data: fb }, { data: notes }] = await Promise.all([
+      supabase.from("feedback").select(FEEDBACK_COLUMNS).eq("id", id).maybeSingle(),
+      supabase
+        .from("feedback_notes")
+        .select("id,created_at,author_name,body")
+        .eq("feedback_id", id)
+        .order("created_at", { ascending: true }),
+    ]);
+    return {
+      feedback: (fb ?? null) as unknown as FeedbackRow | null,
+      notes: (notes ?? []) as { id: string; created_at: string; author_name: string | null; body: string }[],
+    };
+  } catch (err) {
+    console.warn("getFeedbackDetail falling back to demo seed data:", err);
+    return getDemoFeedbackDetail(id);
+  }
 }
