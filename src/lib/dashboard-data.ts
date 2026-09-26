@@ -55,6 +55,22 @@ export interface ThemeStat {
   avgSentiment: number | null;
 }
 
+export interface SubTopicStat {
+  theme: string;
+  sub_topic: string;
+  count: number;
+}
+
+export interface DiscontentDriver {
+  theme: string;
+  /** Weighted negativity: |avgNegativeSentiment| × negativeCount, normalised 0-100 */
+  score: number;
+  /** Percentage of all negative-sentiment feedback in this period */
+  pctOfNegative: number;
+  negativeCount: number;
+  avgSentiment: number | null;
+}
+
 export interface HeatCell {
   department: string;
   theme: string;
@@ -73,6 +89,8 @@ export interface Overview {
   kpis: Kpis;
   weekly: WeeklySentiment[];
   themes: ThemeStat[];
+  subTopics: SubTopicStat[];
+  discontentDrivers: DiscontentDriver[];
   departments: DeptStat[];
   heatmap: { departments: string[]; themes: string[]; cells: HeatCell[] };
   channels: { channel: string; count: number }[];
@@ -83,7 +101,7 @@ export interface Overview {
 
 /** Only what the overview aggregates need — no free text beyond the one-line summary, no PII. */
 const AGG_COLUMNS =
-  "id,created_at,department,channel,sentiment,sentiment_score,themes,emotions,urgency,status,risk_flags,responded_at,summary";
+  "id,created_at,department,channel,sentiment,sentiment_score,themes,sub_topic,emotions,urgency,status,risk_flags,responded_at,summary";
 
 export type AggRow = Pick<
   FeedbackRow,
@@ -94,6 +112,7 @@ export type AggRow = Pick<
   | "sentiment"
   | "sentiment_score"
   | "themes"
+  | "sub_topic"
   | "emotions"
   | "urgency"
   | "status"
@@ -247,11 +266,54 @@ export async function getOverview(periodDays: PeriodDays): Promise<Overview> {
     )
     .slice(0, 8);
 
+  // ── Sub-topic micro-clusters ─────────────────────────────────
+  // Group sub_topic strings by their primary theme; keep top sub-topics per theme.
+  const subTopicMap = new Map<string, Map<string, number>>();
+  for (const r of rows) {
+    if (!r.sub_topic) continue;
+    const primaryTheme = r.themes?.[0];
+    if (!primaryTheme) continue;
+    const inner = subTopicMap.get(primaryTheme) ?? new Map<string, number>();
+    inner.set(r.sub_topic, (inner.get(r.sub_topic) ?? 0) + 1);
+    subTopicMap.set(primaryTheme, inner);
+  }
+  const subTopics: SubTopicStat[] = [];
+  for (const [theme, inner] of subTopicMap) {
+    for (const [sub_topic, count] of [...inner.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)) {
+      subTopics.push({ theme, sub_topic, count });
+    }
+  }
+
+  // ── Discontent Driver Analysis ────────────────────────────────
+  // Rank top 3 themes by weighted negativity = |avgNegSentiment| × negativeCount.
+  const negativeRows = analysed.filter((r) => r.sentiment === "negative");
+  const totalNegative = negativeRows.length;
+  const negThemeMap = new Map<string, number[]>();
+  for (const r of negativeRows)
+    for (const t of r.themes ?? []) {
+      const arr = negThemeMap.get(t) ?? [];
+      if (r.sentiment_score != null) arr.push(r.sentiment_score);
+      negThemeMap.set(t, arr);
+    }
+  const discontentDrivers: DiscontentDriver[] = [...negThemeMap.entries()]
+    .map(([theme, xs]) => {
+      const negCount = xs.length;
+      const avgNeg = avg(xs);
+      // Weight: magnitude of avg negative sentiment × count (more mentions of deeper negativity = higher score)
+      const score = avgNeg != null ? Math.abs(avgNeg) * negCount : negCount;
+      const pctOfNegative = totalNegative > 0 ? (negCount / totalNegative) * 100 : 0;
+      return { theme, score, pctOfNegative, negativeCount: negCount, avgSentiment: avgNeg };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
   return {
     periodDays,
     kpis,
     weekly,
     themes,
+    subTopics,
+    discontentDrivers,
     departments,
     heatmap: { departments: heatDepts, themes: heatThemes, cells },
     channels,
@@ -384,3 +446,104 @@ export async function getFeedbackDetail(id: string) {
     notes: (notes ?? []) as { id: string; created_at: string; author_name: string | null; body: string }[],
   };
 }
+
+// ── ImpactLoop — Sentiment Recovery Tracking ─────────────────────────────────
+
+export interface ImpactLoopResult {
+  updateId: string;
+  updateTitle: string;
+  theme: string;
+  department: string | null;
+  publishedAt: string;
+  feedbackCountBefore: number;
+  feedbackCountAfter: number;
+  avgSentimentBefore: number | null;
+  avgSentimentAfter: number | null;
+  /** Positive = improvement, negative = worsened, null = insufficient data */
+  sentimentDelta: number | null;
+}
+
+const IMPACT_WINDOW_DAYS = 30;
+const IMPACT_MIN_SAMPLES = 3; // minimum feedback items needed in a window to count
+
+/**
+ * For each HR "You said, we did" update (last 90 days) that has a theme,
+ * compute the average sentiment on that theme in the 30 days before vs after.
+ * Returns results sorted by absolute improvement (biggest wins first).
+ */
+export async function getImpactLoop(): Promise<ImpactLoopResult[]> {
+  const supabase = await createClient();
+
+  // Fetch updates from the last 90 days that have a theme.
+  const since90d = new Date(Date.now() - 90 * DAY).toISOString();
+  const { data: updates, error: updError } = await supabase
+    .from("updates")
+    .select("id,title,theme,department,published_at")
+    .eq("status", "published")
+    .gte("published_at", since90d)
+    .not("theme", "is", null)
+    .order("published_at", { ascending: false })
+    .limit(20);
+  if (updError || !updates?.length) return [];
+
+  // For all updates combined, determine the earliest "before" window start.
+  const earliest = updates.reduce((min: string, u: { published_at: string }) => (u.published_at < min ? u.published_at : min), updates[0].published_at);
+  const earliestStart = new Date(new Date(earliest).getTime() - IMPACT_WINDOW_DAYS * DAY).toISOString();
+
+  // Single wide fetch: all feedback from the earliest before-window to now.
+  const { data: fbData, error: fbError } = await supabase
+    .from("feedback")
+    .select("created_at,themes,sentiment_score,sentiment")
+    .gte("created_at", earliestStart)
+    .not("sentiment_score", "is", null)
+    .limit(5000);
+  if (fbError || !fbData) return [];
+
+  type FbSlim = { created_at: string; themes: string[] | null; sentiment_score: number | null; sentiment: string | null };
+  const allFb = fbData as unknown as FbSlim[];
+
+  const results: ImpactLoopResult[] = [];
+
+  for (const upd of updates as { id: string; title: string; theme: string; department: string | null; published_at: string }[]) {
+    const pubMs = new Date(upd.published_at).getTime();
+    const beforeStart = pubMs - IMPACT_WINDOW_DAYS * DAY;
+    const afterEnd = pubMs + IMPACT_WINDOW_DAYS * DAY;
+
+    const relevant = allFb.filter((f) => f.themes?.includes(upd.theme));
+
+    const before = relevant.filter((f) => {
+      const t = new Date(f.created_at).getTime();
+      return t >= beforeStart && t < pubMs && f.sentiment_score != null;
+    });
+    const after = relevant.filter((f) => {
+      const t = new Date(f.created_at).getTime();
+      return t > pubMs && t <= afterEnd && f.sentiment_score != null;
+    });
+
+    const avgBefore = before.length >= IMPACT_MIN_SAMPLES ? avg(before.map((f) => f.sentiment_score!)) : null;
+    const avgAfter = after.length >= IMPACT_MIN_SAMPLES ? avg(after.map((f) => f.sentiment_score!)) : null;
+    const delta = avgBefore != null && avgAfter != null ? avgAfter - avgBefore : null;
+
+    results.push({
+      updateId: upd.id,
+      updateTitle: upd.title,
+      theme: upd.theme,
+      department: upd.department,
+      publishedAt: upd.published_at,
+      feedbackCountBefore: before.length,
+      feedbackCountAfter: after.length,
+      avgSentimentBefore: avgBefore,
+      avgSentimentAfter: avgAfter,
+      sentimentDelta: delta,
+    });
+  }
+
+  // Sort: biggest improvement first, then by most recent
+  return results.sort((a, b) => {
+    if (a.sentimentDelta != null && b.sentimentDelta != null) return b.sentimentDelta - a.sentimentDelta;
+    if (a.sentimentDelta != null) return -1;
+    if (b.sentimentDelta != null) return 1;
+    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+  });
+}
+

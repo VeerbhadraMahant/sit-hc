@@ -1,15 +1,17 @@
-import { AlertOctagon, AlertTriangle, ArrowRight, FileText, Inbox, Mic, ScanText } from "lucide-react";
+import { AlertOctagon, AlertTriangle, ArrowRight, ChevronRight, FileText, Inbox, Mic, ScanText } from "lucide-react";
 import Link from "next/link";
 import { BarList } from "@/components/dashboard/charts/bar-list";
 import { SentimentHeatmap } from "@/components/dashboard/charts/heatmap";
 import { formatScore } from "@/components/dashboard/charts/scale";
 import { SentimentTrendLazy } from "@/components/dashboard/charts/sentiment-trend-lazy";
+import { DiscontentDrivers } from "@/components/dashboard/discontent-drivers";
+import { ImpactLoop } from "@/components/dashboard/impact-loop";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { UrgencyBadge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WellbeingCard } from "@/components/wellbeing/wellbeing-card";
-import { getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
+import { getImpactLoop, getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
 import { getHrUser } from "@/lib/supabase/server";
 import { RISK_LABELS, type RiskFlag } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
@@ -38,7 +40,7 @@ export default async function OverviewPage({
 }) {
   const sp = await searchParams;
   const period = parsePeriod(sp.days);
-  const [user, o] = await Promise.all([getHrUser(), getOverview(period)]);
+  const [user, o, impactResults] = await Promise.all([getHrUser(), getOverview(period), getImpactLoop()]);
   const { kpis } = o;
   const firstName = user?.fullName?.split(" ")[0];
   const sentimentDelta =
@@ -183,12 +185,40 @@ export default async function OverviewPage({
                   href: `/dashboard/feedback?theme=${encodeURIComponent(t.theme)}`,
                 }))}
               />
+              {/* Sub-topic micro-clusters */}
+              {o.subTopics.length > 0 && (
+                <div className="mt-4 border-t border-mist pt-4 space-y-3">
+                  <p className="eyebrow">Micro-issues detected</p>
+                  {o.themes.slice(0, 5).map((t) => {
+                    const subs = o.subTopics.filter((s) => s.theme === t.theme).slice(0, 3);
+                    if (subs.length === 0) return null;
+                    return (
+                      <div key={t.theme}>
+                        <p className="text-xs font-medium text-ink mb-1 flex items-center gap-1">
+                          <ChevronRight className="size-3 text-pewter" aria-hidden />
+                          {t.theme}
+                        </p>
+                        <ul className="space-y-0.5 pl-4">
+                          {subs.map((s) => (
+                            <li key={s.sub_topic} className="flex items-center justify-between text-xs text-pewter">
+                              <span className="truncate">{s.sub_topic}</span>
+                              <span className="ml-2 shrink-0 tabular-nums">{s.count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
             <Card className="lg:col-span-3">
               <CardHeader eyebrow="Where it hurts" title="Department × theme sentiment" />
               <SentimentHeatmap {...o.heatmap} />
             </Card>
           </section>
+
+          <DiscontentDrivers drivers={o.discontentDrivers} className="" />
 
           <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
@@ -274,6 +304,8 @@ export default async function OverviewPage({
           <Suspense fallback={<Card className="h-64 animate-pulse" />}>
             <WellbeingCard />
           </Suspense>
+
+          <ImpactLoop results={impactResults} />
         </>
       )}
     </div>

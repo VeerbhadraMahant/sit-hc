@@ -26,6 +26,13 @@ export const AnalysisSchema = z.object({
     ),
   risk_flags: z.array(z.enum(RISK_FLAGS)).describe("Only flags clearly supported by the text; empty if none"),
   suggested_action: z.string().describe("One concrete next step HR could take (max 30 words)"),
+  sub_topic: z
+    .string()
+    .max(50)
+    .optional()
+    .describe(
+      "A 2-4 word micro-issue label capturing the specific problem within the primary theme (e.g. 'Slow laptop performance', 'VPN disconnections', 'No 1:1 meetings'). Do NOT restate the theme name.",
+    ),
 });
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
