@@ -6,7 +6,7 @@
 create extension if not exists vector with schema extensions;
 
 -- ── HR profiles ───────────────────────────────────────────────
-create table public.hr_profiles (
+create table if not exists public.hr_profiles (
   user_id uuid primary key references auth.users (id) on delete cascade,
   full_name text,
   role text not null default 'hr_admin' check (role in ('hr_admin', 'hr_viewer')),
@@ -24,7 +24,7 @@ as $$
 $$;
 
 -- ── Feedback (one row per submission, analysis inline) ───────
-create table public.feedback (
+create table if not exists public.feedback (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   tracking_code text not null unique,
@@ -55,14 +55,14 @@ create table public.feedback (
   constraint anonymous_has_no_identity check (not is_anonymous or (submitter_name is null and submitter_email is null))
 );
 
-create index feedback_created_at_idx on public.feedback (created_at desc);
-create index feedback_department_idx on public.feedback (department);
-create index feedback_urgency_idx on public.feedback (urgency) where urgency in ('high', 'critical');
-create index feedback_themes_idx on public.feedback using gin (themes);
-create index feedback_embedding_idx on public.feedback using hnsw (embedding extensions.vector_cosine_ops);
+create index if not exists feedback_created_at_idx on public.feedback (created_at desc);
+create index if not exists feedback_department_idx on public.feedback (department);
+create index if not exists feedback_urgency_idx on public.feedback (urgency) where urgency in ('high', 'critical');
+create index if not exists feedback_themes_idx on public.feedback using gin (themes);
+create index if not exists feedback_embedding_idx on public.feedback using hnsw (embedding extensions.vector_cosine_ops);
 
 -- ── Insight reports (AI-generated, cached) ────────────────────
-create table public.insight_reports (
+create table if not exists public.insight_reports (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   created_by uuid references auth.users (id) on delete set null,
@@ -77,10 +77,10 @@ create table public.insight_reports (
   action_items jsonb not null default '[]'
 );
 
-create index insight_reports_created_at_idx on public.insight_reports (created_at desc);
+create index if not exists insight_reports_created_at_idx on public.insight_reports (created_at desc);
 
 -- ── Internal HR case notes (never visible to employees) ───────
-create table public.feedback_notes (
+create table if not exists public.feedback_notes (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   feedback_id uuid not null references public.feedback (id) on delete cascade,
@@ -89,14 +89,16 @@ create table public.feedback_notes (
   body text not null check (char_length(body) between 1 and 4000)
 );
 
-create index feedback_notes_feedback_idx on public.feedback_notes (feedback_id, created_at);
+create index if not exists feedback_notes_feedback_idx on public.feedback_notes (feedback_id, created_at);
 
 -- ── Row level security ────────────────────────────────────────
 alter table public.feedback_notes enable row level security;
 
+drop policy if exists "HR can read notes" on public.feedback_notes;
 create policy "HR can read notes" on public.feedback_notes
   for select to authenticated using ((select public.is_hr()));
 
+drop policy if exists "HR can add notes" on public.feedback_notes;
 create policy "HR can add notes" on public.feedback_notes
   for insert to authenticated with check ((select public.is_hr()) and author_id = (select auth.uid()));
 
@@ -104,18 +106,23 @@ alter table public.hr_profiles enable row level security;
 alter table public.feedback enable row level security;
 alter table public.insight_reports enable row level security;
 
+drop policy if exists "HR can read own profile" on public.hr_profiles;
 create policy "HR can read own profile" on public.hr_profiles
   for select to authenticated using (user_id = (select auth.uid()));
 
+drop policy if exists "HR can read feedback" on public.feedback;
 create policy "HR can read feedback" on public.feedback
   for select to authenticated using ((select public.is_hr()));
 
+drop policy if exists "HR can update feedback" on public.feedback;
 create policy "HR can update feedback" on public.feedback
   for update to authenticated using ((select public.is_hr())) with check ((select public.is_hr()));
 
+drop policy if exists "HR can read reports" on public.insight_reports;
 create policy "HR can read reports" on public.insight_reports
   for select to authenticated using ((select public.is_hr()));
 
+drop policy if exists "HR can create reports" on public.insight_reports;
 create policy "HR can create reports" on public.insight_reports
   for insert to authenticated with check ((select public.is_hr()));
 
