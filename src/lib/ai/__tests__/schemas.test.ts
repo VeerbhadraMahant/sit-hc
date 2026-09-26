@@ -52,10 +52,12 @@ describe("InsightSchema", () => {
       {
         title: "Expand on-call rotation",
         description: "Grow rotation from 5 to 8.",
+        root_cause: "Five engineers carry most pages after team reorganization.",
         priority: "P1",
         owner: "Engineering leadership",
         timeframe: "This week",
         expected_impact: "Fewer night pages per person",
+        evidence_ids: ["F1", "F4"],
       },
     ],
   };
