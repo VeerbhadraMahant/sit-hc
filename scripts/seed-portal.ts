@@ -1,6 +1,6 @@
 // Seeds employee-portal demo data: ~24 demo employees, 8 weeks of wellbeing check-ins,
 // pulse surveys with responses, "You said, we did" updates, notifications, and two
-// feedback items owned by the demo employee (employee@vocalyze.demo).
+// feedback items owned by the demo employee (DEMO_EMPLOYEE_EMAIL in .env.local).
 //   npm run seed:portal            → removes previous portal seed data, then seeds
 //   npm run seed:portal -- --reset → only removes portal seed data
 // Standalone: no "server-only" imports. Hashes match src/lib/identity.ts exactly.
@@ -13,9 +13,9 @@ config({ path: ".env.local", quiet: true });
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const secret = process.env.ANON_LINK_SECRET;
-const DEMO_EMAIL = (process.env.DEMO_EMPLOYEE_EMAIL || "employee@vocalyze.demo").toLowerCase();
-if (!url || !serviceKey || !secret) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY or ANON_LINK_SECRET in .env.local");
+const DEMO_EMAIL = process.env.DEMO_EMPLOYEE_EMAIL?.toLowerCase();
+if (!url || !serviceKey || !secret || !DEMO_EMAIL) {
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANON_LINK_SECRET or DEMO_EMPLOYEE_EMAIL in .env.local");
   process.exit(1);
 }
 const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });

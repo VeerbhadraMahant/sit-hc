@@ -1,9 +1,11 @@
-// Creates two memorable, judge-facing demo accounts on top of the existing seed data:
-//   developer_hr@vocalyze.demo        — HR console access
-//   developer_employee@vocalyze.demo  — employee portal, with its own feedback history,
-//                                        a check-in trend, and the active survey left
-//                                        unanswered so it can be answered live.
+// Creates two judge-facing demo accounts (from DEV_HR_*/DEV_EMPLOYEE_* in .env.local)
+// on top of the existing seed data:
+//   - the HR account gets HR console access.
+//   - the employee account gets its own feedback history (actioned/in-review/new),
+//     a check-in trend that deliberately skips the current week, and the active
+//     survey left unanswered, so both can be demoed live.
 // Safe to re-run: upserts the accounts/profiles and only inserts personal seed data once.
+// Credentials are never hardcoded here — set them in .env.local (gitignored), never commit them.
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import { createHmac, randomInt } from "node:crypto";
