@@ -431,6 +431,46 @@ export async function listFeedbackPage(
   return { rows: (data ?? []) as unknown as ListRow[], total, page: safePage, hasMore: from + INBOX_PAGE_SIZE < total };
 }
 
+export interface FeedbackSummary {
+  total: number;
+  avgSentiment: number | null;
+  sentiment: { positive: number; neutral: number; negative: number };
+  urgency: { low: number; medium: number; high: number; critical: number };
+  pendingAnalysis: number;
+}
+
+/** Aggregate snapshot of the currently filtered feedback set, for the inbox's overview strip. */
+export async function getFeedbackSummary(f: FeedbackFilters): Promise<FeedbackSummary> {
+  const supabase = await createClient();
+  const q = applyFilters(
+    supabase.from("feedback").select("sentiment,sentiment_score,urgency,processing_status").limit(5000),
+    f,
+  );
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as { sentiment: string | null; sentiment_score: number | null; urgency: string | null; processing_status: string }[];
+
+  const count = (pred: (r: (typeof rows)[number]) => boolean) => rows.filter(pred).length;
+  const scores = rows.map((r) => r.sentiment_score).filter((s): s is number => s != null);
+
+  return {
+    total: rows.length,
+    avgSentiment: avg(scores),
+    sentiment: {
+      positive: count((r) => r.sentiment === "positive"),
+      neutral: count((r) => r.sentiment === "neutral" || r.sentiment === "mixed"),
+      negative: count((r) => r.sentiment === "negative"),
+    },
+    urgency: {
+      low: count((r) => r.urgency === "low"),
+      medium: count((r) => r.urgency === "medium"),
+      high: count((r) => r.urgency === "high"),
+      critical: count((r) => r.urgency === "critical"),
+    },
+    pendingAnalysis: count((r) => r.processing_status !== "done"),
+  };
+}
+
 export async function getFeedbackDetail(id: string) {
   const supabase = await createClient();
   const [{ data: fb }, { data: notes }] = await Promise.all([

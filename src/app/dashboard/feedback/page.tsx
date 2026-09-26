@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Download, FileText, Inbox, Mic, ScanText } f
 import Link from "next/link";
 import { FeedbackDetail } from "@/components/dashboard/feedback-detail";
 import { FeedbackFiltersBar } from "@/components/dashboard/feedback-filters";
+import { FeedbackSummarySkeleton, FeedbackSummaryStrip } from "@/components/dashboard/feedback-summary";
 import { SentimentBadge, UrgencyBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -47,6 +48,8 @@ export default async function FeedbackPage({
   ).toString();
   // The list only depends on filters + page, so opening an item (?id=) keeps it mounted.
   const listKey = withParam(sp, "id", null);
+  const summaryKey = withParam({ ...sp, page: undefined }, "id", null);
+  const hasActiveFilters = Object.values(filters).some((v) => v !== undefined && v !== "");
 
   return (
     <div className="space-y-6">
@@ -65,6 +68,10 @@ export default async function FeedbackPage({
 
       <Suspense fallback={<div className="h-10" />}>
         <FeedbackFiltersBar />
+      </Suspense>
+
+      <Suspense key={summaryKey} fallback={<FeedbackSummarySkeleton />}>
+        <FeedbackSummaryStrip filters={filters} filtered={hasActiveFilters} />
       </Suspense>
 
       <div className={cn("grid gap-4", selectedId && "lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]")}>
