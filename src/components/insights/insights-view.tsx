@@ -11,7 +11,6 @@ import {
   Quote,
   RefreshCw,
   Sparkles,
-  ThumbsUp,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -309,7 +308,19 @@ export function InsightsView({
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {concerns.map((c, i) => (
-                    <Card key={i} className="flex flex-col break-inside-avoid">
+                    <Card
+                      key={i}
+                      glow={c.severity === "critical" ? "critical" : undefined}
+                      arc={c.severity === "critical"}
+                      className={cn(
+                        "flex flex-col break-inside-avoid",
+                        c.severity === "critical"
+                          ? "border border-red-200/90 bg-gradient-to-b from-red-500/[0.04] to-paper"
+                          : c.severity === "high"
+                          ? "border border-amber-200/80 bg-gradient-to-b from-amber-500/[0.02] to-paper"
+                          : "",
+                      )}
+                    >
                       <div className="mb-3 flex flex-wrap items-center gap-2">
                         <UrgencyBadge urgency={c.severity} />
                         <Badge>{c.theme}</Badge>
@@ -323,10 +334,10 @@ export function InsightsView({
                             {d}
                           </span>
                         ))}
-                        {c.evidence_ids.length > 0 && (
+                        {(c.evidence_ids?.length ?? 0) > 0 && (
                           <details className="ml-auto text-sm print:hidden">
                             <summary className="cursor-pointer font-medium text-cobalt">
-                              View evidence ({c.evidence_ids.length})
+                              View evidence ({c.evidence_ids?.length})
                             </summary>
                             <ul className="mt-2 space-y-1">
                               {c.evidence_ids.slice(0, 8).map((id, j) => (
@@ -407,13 +418,13 @@ export function InsightsView({
                                   </span>
                                 </span>
                                 <span className="mt-1 block text-xs text-graphite">Impact: {a.expected_impact}</span>
-                                {a.evidence_ids.length > 0 && (
+                                {(a.evidence_ids?.length ?? 0) > 0 && (
                                   <details className="mt-2 text-xs">
                                     <summary className="cursor-pointer font-medium text-cobalt">
-                                      View evidence ({a.evidence_ids.length})
+                                      View evidence ({a.evidence_ids?.length})
                                     </summary>
                                     <ul className="mt-1 space-y-1">
-                                      {a.evidence_ids.slice(0, 5).map((id, j) => (
+                                      {a.evidence_ids?.slice(0, 5).map((id, j) => (
                                         <li key={id}>
                                           <Link
                                             href={`/dashboard/feedback?id=${id}`}
@@ -449,7 +460,7 @@ export function InsightsView({
                 <div className="grid gap-4 md:grid-cols-3">
                   {report.positives.map((p, i) => (
                     <Card key={i} glow="good" arc className="break-inside-avoid">
-                      <ThumbsUp className="mb-3 size-5 text-ink" />
+                      <Sparkles className="mb-3 size-5 text-ink" />
                       <h4 className="font-semibold text-obsidian">{p.title}</h4>
                       <p className="mt-1 text-sm text-carbon">{p.description}</p>
                     </Card>

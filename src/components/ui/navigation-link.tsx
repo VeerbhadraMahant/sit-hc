@@ -11,11 +11,15 @@ export function NavigationLink({
   label,
   Icon,
   active,
+  className,
+  extra,
 }: {
   href: string;
   label: string;
   Icon: LucideIcon;
   active: boolean;
+  className?: string;
+  extra?: React.ReactNode;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -56,6 +60,7 @@ export function NavigationLink({
           : isPending
             ? "bg-mist text-cobalt ring-2 ring-cobalt/30"
             : "text-ink hover:bg-mist",
+        className,
       )}
     >
       {isPending ? (
@@ -64,6 +69,7 @@ export function NavigationLink({
         <Icon className="size-4" aria-hidden />
       )}
       <span>{label}</span>
+      {extra}
       {isPending && <span className="sr-only">Loading {label}...</span>}
     </Link>
   );

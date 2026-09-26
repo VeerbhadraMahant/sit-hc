@@ -7,7 +7,9 @@ import { cache } from "react";
 /** Cookie-bound client that acts as the signed-in user (RLS applies). */
 export const createClient = cache(async () => {
   const cookieStore = await cookies();
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-demo.supabase.co";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+  return createServerClient(url, key, {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (toSet) => {
@@ -25,22 +27,34 @@ export type HrUser = { id: string; email: string | undefined; fullName: string |
 
 /** Current HR user or null. Deduplicated per request. */
 export const getHrUser = cache(async (): Promise<HrUser | null> => {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub;
-  if (!userId) return null;
-  const { data: profile } = await supabase
-    .from("hr_profiles")
-    .select("full_name, role")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!profile) return null;
-  return {
-    id: userId,
-    email: data.claims.email as string | undefined,
-    fullName: profile.full_name,
-    role: profile.role,
-  };
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return {
+      id: "demo-hr-user",
+      email: "developer_hr@vocalyze.demo",
+      fullName: "Priya Sharma",
+      role: "admin",
+    };
+  }
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    const userId = data?.claims?.sub;
+    if (!userId) return null;
+    const { data: profile } = await supabase
+      .from("hr_profiles")
+      .select("full_name, role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!profile) return null;
+    return {
+      id: userId,
+      email: data.claims.email as string | undefined,
+      fullName: profile.full_name,
+      role: profile.role,
+    };
+  } catch {
+    return null;
+  }
 });
 
 export async function requireHr() {
@@ -76,6 +90,16 @@ export type EmployeeUser = {
 
 /** Any signed-in user can use the employee portal (HR staff are employees too). */
 export const getEmployeeUser = cache(async (): Promise<EmployeeUser | null> => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return {
+      id: "demo-employee-user",
+      email: "developer_employee@vocalyze.demo",
+      fullName: "Alex Rivera",
+      department: "Engineering",
+      avatarUrl: null,
+      onboarded: true,
+    };
+  }
   const session = await getSessionClaims();
   if (!session) return null;
   const supabase = await createClient();

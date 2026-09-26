@@ -1,5 +1,6 @@
 import { FinalCta, Footer } from "@/components/landing/cta-footer";
 import { Features } from "@/components/landing/features";
+import { FeedbackIntelligence } from "@/components/landing/feedback-intelligence";
 import { ForEmployees } from "@/components/landing/for-employees";
 import { ForHr } from "@/components/landing/for-hr";
 import { Hero } from "@/components/landing/hero";
@@ -14,6 +15,7 @@ export default function Home() {
       <main className="overflow-x-clip">
         <Hero />
         <Features />
+        <FeedbackIntelligence />
         <HowItWorks />
         <ForHr />
         <ForEmployees />

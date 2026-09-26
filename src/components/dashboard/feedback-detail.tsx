@@ -151,6 +151,25 @@ export function FeedbackDetail({
           </div>
         )}
 
+        {f.urgency === "critical" && (
+          <div className="flex items-start gap-3 rounded-smallcards border border-red-200/90 bg-red-500/[0.08] p-4 text-sm arc glow-critical">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-[#d03b3b] ring-1 ring-red-500/30">
+              <ShieldAlert className="size-4.5" aria-hidden />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-[#a82323]">Critical Risk Protocol Active</p>
+                <span className="rounded-full bg-red-500/20 px-2 py-0.2 text-[11px] font-semibold text-[#d03b3b]">
+                  Priority Escalation
+                </span>
+              </div>
+              <p className="text-xs text-graphite mt-1 leading-relaxed">
+                This submission contains high-severity triggers ({risks.map((r) => RISK_LABELS[r] ?? r).join(", ") || "Safety/Harassment"}). Instant alert was dispatched to HR leadership. Handle with strict confidentiality and compliance protocol.
+              </p>
+            </div>
+          </div>
+        )}
+
         {f.summary && (
           <div>
             <p className="eyebrow">AI summary</p>
@@ -195,13 +214,16 @@ export function FeedbackDetail({
           </div>
           {risks.length > 0 && (
             <div className="sm:col-span-2">
-              <dt className="eyebrow">Risk flags</dt>
+              <dt className="eyebrow text-[#a82323]">Risk flags</dt>
               <dd className="flex flex-wrap gap-1.5">
                 {risks.map((r) => (
-                  <Badge key={r}>
-                    <ShieldAlert className="size-3.5" style={{ color: "var(--status-critical)" }} aria-hidden />
+                  <span
+                    key={r}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-red-200/90 bg-red-500/10 px-3 py-1 text-xs font-semibold text-[#d03b3b] shadow-xs"
+                  >
+                    <ShieldAlert className="size-3.5 text-[#d03b3b]" aria-hidden />
                     {RISK_LABELS[r] ?? r}
-                  </Badge>
+                  </span>
                 ))}
               </dd>
             </div>
@@ -250,9 +272,18 @@ export function FeedbackDetail({
         )}
 
         {f.suggested_action && (
-          <div className="rounded-smallcards bg-mint-tint/60 p-4">
-            <p className="eyebrow text-forest">Suggested next step</p>
-            <p className="text-ink">{f.suggested_action}</p>
+          <div
+            className={cn(
+              "rounded-smallcards p-4",
+              f.urgency === "critical"
+                ? "border border-red-200/90 bg-red-500/[0.05]"
+                : "bg-mint-tint/60",
+            )}
+          >
+            <p className={cn("eyebrow", f.urgency === "critical" ? "text-[#a82323]" : "text-forest")}>
+              {f.urgency === "critical" ? "Immediate Recommended Action" : "Suggested next step"}
+            </p>
+            <p className="text-ink font-medium">{f.suggested_action}</p>
           </div>
         )}
 

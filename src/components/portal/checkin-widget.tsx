@@ -1,6 +1,6 @@
 "use client";
 
-import { Annoyed, Check, Frown, Laugh, Loader2, Meh, Smile } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,7 +9,6 @@ import { Label, Textarea } from "@/components/ui/field";
 import { MOOD_LABELS, type CheckIn } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const MOOD_ICONS = [Frown, Annoyed, Meh, Smile, Laugh];
 export const ENERGY_LABELS = ["Drained", "Tired", "Steady", "Energised", "Charged"] as const;
 
 function Scale({
@@ -22,7 +21,7 @@ function Scale({
   label: string;
   value: number | null;
   onChange: (v: number) => void;
-  options: { label: string; icon?: React.ReactNode }[];
+  options: { label: string }[];
   name: string;
 }) {
   return (
@@ -45,7 +44,7 @@ function Scale({
                 selected ? "bg-carbon text-paper" : "bg-paper text-ink shadow-field hover:bg-mist",
               )}
             >
-              {o.icon ?? <span className="text-base font-semibold tabular-nums">{v}</span>}
+              <span className="text-base font-semibold tabular-nums">{v}</span>
               <span className="leading-tight">{o.label}</span>
             </button>
           );
@@ -95,10 +94,7 @@ export function CheckinWidget({ existing, compact = false }: { existing: CheckIn
           setMood(v);
           setSaved(false);
         }}
-        options={MOOD_LABELS.map((l, i) => {
-          const Icon = MOOD_ICONS[i]!;
-          return { label: l, icon: <Icon className="size-5" aria-hidden /> };
-        })}
+        options={MOOD_LABELS.map((l) => ({ label: l }))}
       />
       <Scale
         name="energy"

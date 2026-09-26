@@ -16,33 +16,67 @@ export const metadata: Metadata = { title: "Home — Vocalyze" };
 
 export default async function PortalHome() {
   const user = await requireEmployee();
-  const supabase = await createClient();
 
-  const [feedback, checkinRes, surveysRes, updatesRes] = await Promise.all([
-    listMyFeedback(user.id, 50),
-    supabase
-      .from("checkins")
-      .select("id,created_at,week,mood,energy,note")
-      .eq("user_id", user.id)
-      .eq("week", isoWeekStart())
-      .maybeSingle(),
-    supabase
-      .from("surveys")
-      .select("id,title,description,questions,closes_at,published_at")
-      .eq("status", "active")
-      .order("published_at", { ascending: false })
-      .limit(3),
-    supabase
-      .from("updates")
-      .select("id,created_at,title,body,theme,department,feedback_count,published_at")
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(3),
-  ]);
+  let feedback: Awaited<ReturnType<typeof listMyFeedback>> = [];
+  let checkin: CheckIn | null = null;
+  let surveys: Pick<Survey, "id" | "title" | "description" | "questions" | "closes_at">[] = [];
+  let updates: UpdatePost[] = [];
 
-  const checkin = (checkinRes.data as CheckIn | null) ?? null;
-  const surveys = (surveysRes.data ?? []) as Pick<Survey, "id" | "title" | "description" | "questions" | "closes_at">[];
-  const updates = (updatesRes.data ?? []) as UpdatePost[];
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabase = await createClient();
+      const [f, checkinRes, surveysRes, updatesRes] = await Promise.all([
+        listMyFeedback(user.id, 50),
+        supabase
+          .from("checkins")
+          .select("id,created_at,week,mood,energy,note")
+          .eq("user_id", user.id)
+          .eq("week", isoWeekStart())
+          .maybeSingle(),
+        supabase
+          .from("surveys")
+          .select("id,title,description,questions,closes_at,published_at")
+          .eq("status", "active")
+          .order("published_at", { ascending: false })
+          .limit(3),
+        supabase
+          .from("updates")
+          .select("id,created_at,title,body,theme,department,feedback_count,published_at")
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .limit(3),
+      ]);
+      feedback = f;
+      checkin = (checkinRes.data as CheckIn | null) ?? null;
+      surveys = (surveysRes.data ?? []) as Pick<Survey, "id" | "title" | "description" | "questions" | "closes_at">[];
+      updates = (updatesRes.data ?? []) as UpdatePost[];
+    } catch {
+      feedback = await listMyFeedback(user.id);
+    }
+  } else {
+    feedback = await listMyFeedback(user.id);
+    checkin = {
+      id: "demo-chk-today",
+      created_at: new Date().toISOString(),
+      week: isoWeekStart(),
+      mood: 4,
+      energy: 4,
+      note: "Good week overall.",
+    };
+    updates = [
+      {
+        id: "demo-update-1",
+        created_at: new Date().toISOString(),
+        published_at: new Date().toISOString(),
+        title: "Actions on Ergonomic Equipment & Workstation Refresh",
+        body: "Following recent feedback, facilities has replaced old task chairs on Floor 3 and will complete desk audits next week.",
+        theme: "Facilities",
+        department: "Operations",
+        feedback_count: 5,
+      },
+    ];
+  }
+
   const stats = feedbackStats(feedback);
   const firstName = user.fullName?.split(" ")[0];
 

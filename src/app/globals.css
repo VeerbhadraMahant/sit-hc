@@ -209,11 +209,7 @@ body {
   .glow-mint { --glow: 25, 247, 154; --arc: var(--gradient-mint-pulse); }
   .glow-amber { --glow: 255, 198, 80; --arc: var(--gradient-amber-glow); }
   .glow-citron { --glow: 229, 237, 56; --arc: var(--gradient-citron-wave); }
-
-  /* Semantic (meaning-tied) glows for dashboards — use these instead of the decorative
-     hues above whenever a card's color should tell HR something is good/warning/bad,
-     not just look pretty. */
-  .glow-critical { --glow: 208, 59, 59; --arc: linear-gradient(var(--status-critical), var(--status-critical)); }
+  .glow-critical { --glow: 208, 59, 59; --arc: linear-gradient(90deg, #d03b3b 0%, #ec835a 100%); }
   .glow-warning { --glow: 250, 178, 25; --arc: linear-gradient(var(--status-warning), var(--status-warning)); }
   .glow-good { --glow: 12, 163, 12; --arc: linear-gradient(var(--status-good), var(--status-good)); }
 }
