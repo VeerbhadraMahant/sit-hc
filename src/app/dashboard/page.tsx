@@ -1,19 +1,22 @@
-import { AlertOctagon, AlertTriangle, ArrowRight, FileText, Inbox, Mic, ScanText } from "lucide-react";
+import { AlertOctagon, AlertTriangle, ArrowRight, ChevronRight, FileText, Inbox, Mic, ScanText } from "lucide-react";
 import Link from "next/link";
 import { BarList } from "@/components/dashboard/charts/bar-list";
 import { SentimentHeatmap } from "@/components/dashboard/charts/heatmap";
 import { formatScore } from "@/components/dashboard/charts/scale";
 import { SentimentTrendLazy } from "@/components/dashboard/charts/sentiment-trend-lazy";
+import { DiscontentDrivers } from "@/components/dashboard/discontent-drivers";
+import { ImpactLoop } from "@/components/dashboard/impact-loop";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { UrgencyBadge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WellbeingCard } from "@/components/wellbeing/wellbeing-card";
-import { getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
+import { getImpactLoop, getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
 import { getHrUser } from "@/lib/supabase/server";
 import { RISK_LABELS, type RiskFlag } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
 import { Suspense } from "react";
+import { OutcomeCard } from "@/components/dashboard/outcome-card";
 
 export const metadata = { title: "Overview — Vocalyze HR" };
 
@@ -37,7 +40,7 @@ export default async function OverviewPage({
 }) {
   const sp = await searchParams;
   const period = parsePeriod(sp.days);
-  const [user, o] = await Promise.all([getHrUser(), getOverview(period)]);
+  const [user, o, impactResults] = await Promise.all([getHrUser(), getOverview(period), getImpactLoop()]);
   const { kpis } = o;
   const firstName = user?.fullName?.split(" ")[0];
   const sentimentDelta =
@@ -45,6 +48,7 @@ export default async function OverviewPage({
 
   return (
     <div className="space-y-6">
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-cards bg-mist" />}><OutcomeCard /></Suspense>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Overview · last {period} days</p>
@@ -121,14 +125,13 @@ export default async function OverviewPage({
             <StatTile
               label="Feedback received"
               value={kpis.total}
-              glow="cyan"
               delta={kpis.deltaPct != null ? { value: kpis.deltaPct, label: `${Math.abs(kpis.deltaPct).toFixed(0)}%` } : null}
               sub={<span>vs previous {period}d</span>}
             />
             <StatTile
               label="Avg sentiment"
               value={formatScore(kpis.avgSentiment)}
-              glow="mint"
+              glow={kpis.avgSentiment == null ? undefined : kpis.avgSentiment >= 0 ? "good" : "critical"}
               delta={sentimentDelta != null ? { value: sentimentDelta, label: formatScore(sentimentDelta) } : null}
               sub={<span>{kpis.pctNegative != null ? `${kpis.pctNegative.toFixed(0)}% negative` : "scale −1 to +1"}</span>}
             />
@@ -142,13 +145,12 @@ export default async function OverviewPage({
                   )}
                 </span>
               }
-              glow={kpis.openUrgent > 0 ? "critical" : "orchid"}
+              glow={kpis.openUrgent > 0 ? "critical" : undefined}
               sub={<span className={cn(kpis.openUrgent > 0 ? "text-[#a82323] font-medium" : "")}>critical + high, not yet actioned</span>}
             />
             <StatTile
               label="Response rate"
               value={kpis.responseRate != null ? `${kpis.responseRate.toFixed(0)}%` : "—"}
-              glow="amber"
               sub={
                 <span>
                   {kpis.medianHoursToRespond != null
@@ -185,7 +187,15 @@ export default async function OverviewPage({
                 <ul className="-mx-2 flex-1 space-y-1.5">
                   {o.needsAttention.map((f) => (
                     <li key={f.id}>
-                      <Link href={`/dashboard/feedback?id=${f.id}`} className="block rounded-smallcards border-l-2 border-l-[#d03b3b] bg-red-500/[0.03] px-3 py-2.5 hover:bg-red-500/[0.08] transition-colors">
+                      <Link
+                        href={`/dashboard/feedback?id=${f.id}`}
+                        className={cn(
+                          "block rounded-smallcards border-l-2 px-3 py-2.5 transition-colors",
+                          f.urgency === "critical"
+                            ? "border-l-[#d03b3b] bg-red-500/[0.03] hover:bg-red-500/[0.08]"
+                            : "border-l-amber-500/70 bg-amber-500/[0.02] hover:bg-amber-500/[0.06]",
+                        )}
+                      >
                         <div className="flex items-center gap-2">
                           <UrgencyBadge urgency={f.urgency} />
                           <span className="truncate text-xs font-medium text-graphite">
@@ -212,12 +222,40 @@ export default async function OverviewPage({
                   href: `/dashboard/feedback?theme=${encodeURIComponent(t.theme)}`,
                 }))}
               />
+              {/* Sub-topic micro-clusters */}
+              {o.subTopics.length > 0 && (
+                <div className="mt-4 border-t border-mist pt-4 space-y-3">
+                  <p className="eyebrow">Micro-issues detected</p>
+                  {o.themes.slice(0, 5).map((t) => {
+                    const subs = o.subTopics.filter((s) => s.theme === t.theme).slice(0, 3);
+                    if (subs.length === 0) return null;
+                    return (
+                      <div key={t.theme}>
+                        <p className="text-xs font-medium text-ink mb-1 flex items-center gap-1">
+                          <ChevronRight className="size-3 text-pewter" aria-hidden />
+                          {t.theme}
+                        </p>
+                        <ul className="space-y-0.5 pl-4">
+                          {subs.map((s) => (
+                            <li key={s.sub_topic} className="flex items-center justify-between text-xs text-pewter">
+                              <span className="truncate">{s.sub_topic}</span>
+                              <span className="ml-2 shrink-0 tabular-nums">{s.count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
             <Card className="lg:col-span-3">
               <CardHeader eyebrow="Where it hurts" title="Department × theme sentiment" />
               <SentimentHeatmap {...o.heatmap} />
             </Card>
           </section>
+
+          <DiscontentDrivers drivers={o.discontentDrivers} className="" />
 
           <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
@@ -303,6 +341,8 @@ export default async function OverviewPage({
           <Suspense fallback={<Card className="h-64 animate-pulse" />}>
             <WellbeingCard />
           </Suspense>
+
+          <ImpactLoop results={impactResults} />
         </>
       )}
     </div>

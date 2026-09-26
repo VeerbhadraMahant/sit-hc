@@ -12,6 +12,17 @@
 
 ---
 
+### Anonymous Conversations & Proof of Action
+- **Private employee–HR follow-up threads**: Accessible through account ownership or a separate guest reply key.
+- **Local privacy review**: Editable suggestions for common identifying details before employee replies.
+- **HR action commitments**: Owners, deadlines, and completion evidence.
+- **Employee confirmation**: “Yes, it helped” or “Still happening”, shown separately from HR completion on the dashboard.
+- **Action history**: Preserves earlier commitments and confirmations.
+
+See [setup, privacy limits, and the three-minute demo](docs/CLOSED_LOOP_DEMO.md).
+
+---
+
 ## Overview
 
 ### The Problem
@@ -370,8 +381,11 @@ npm run db -- --file supabase/migrations/0001_init.sql
 
 # Execute schema migration 2 (Portal, check-ins, surveys, k>=5 aggregates)
 npm run db -- --file supabase/migrations/0002_employee_portal.sql
+
+# Execute schema migration 3 (Closed-loop conversations and action proof)
+npm run db -- --file supabase/migrations/0003_closed_loop.sql
 ```
-*(Alternatively, copy and paste both files into the Supabase Web SQL Editor).*
+*(Alternatively, copy and paste the SQL files into the Supabase Web SQL Editor).*
 
 ### 4. Bootstrap Administrative Users & Seed Demo Data
 ```bash
@@ -512,7 +526,7 @@ The codebase includes automated unit testing, type checking, and linting suites:
 # Run TypeScript compilation check
 npm run typecheck
 
-# Execute unit test suites (schemas, AI survey aggregation)
+# Execute unit test suites (schemas, AI survey aggregation, closed-loop)
 npm run test
 
 # Run ESLint validation
@@ -524,33 +538,4 @@ npm run screenshots
 
 ---
 
-## Deployment
 
-### Vercel (Recommended)
-1. Push repository to GitHub.
-2. Import project into [Vercel](https://vercel.com/).
-3. Add all environment variables defined in `.env.example` to the Vercel Project Settings.
-4. Set the `NEXT_PUBLIC_APP_URL` to your production domain (e.g., `https://vocalyze.yourcompany.com`).
-5. Deploy.
-
-### Supabase Production Readiness
-- Ensure database connections use connection pooling (Transaction mode, port 6543) for serverless environments.
-- Verify OAuth callback URLs include `https://<your-vercel-domain>/auth/v1/callback`.
-- Verify your sender domain in [Resend](https://resend.com/domains) and update `EMAIL_FROM` to an authenticated corporate address (e.g., `Vocalyze <feedback@yourcompany.com>`).
-
----
-
-## Known Limitations
-
-- **Email Delivery in Sandbox:** When using the unverified default Resend sandbox (`onboarding@resend.dev`), alert emails can only be delivered to the verified account owner's email address. Domain verification in Resend is required for arbitrary recipient delivery.
-- **Audio File Size:** Direct browser audio recording and memory upload are capped at 10 MB per voice note to maintain fast in-memory transcription and avoid serverless memory exhaustion.
-- **$k$-Anonymity Data Thresholds:** Teams or departments with fewer than 5 active check-ins during a given week are intentionally suppressed from HR wellbeing charts to guarantee statistical anonymity.
-
----
-
-## Roadmap
-
-- [ ] **WhatsApp & IVR Voice Intake:** Two-way voice and messaging hotline enabling factory and field staff without smartphones to submit feedback via phone call or WhatsApp message.
-- [ ] **Factory Floor Kiosk Mode:** Touchscreen kiosk interface designed for shared tablet terminals in breakrooms with session auto-reset and zero cached data.
-- [ ] **HRIS Integrations:** Native connectors for enterprise HR systems including Workday, Darwinbox, and Zoho People for automated organizational hierarchy mapping.
-- [ ] **Predictive Attrition Forecasting:** Multi-week aggregate trend analysis identifying turnover indicators before resignations occur.

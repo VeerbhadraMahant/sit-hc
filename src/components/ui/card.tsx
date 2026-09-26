@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type Glow = "cyan" | "lime" | "orchid" | "mint" | "amber" | "citron" | "critical";
+export type Glow = "cyan" | "lime" | "orchid" | "mint" | "amber" | "citron" | "critical" | "warning" | "good";
 
 type CardProps = React.HTMLAttributes<HTMLDivElement> & { glow?: Glow; arc?: boolean; small?: boolean };
 

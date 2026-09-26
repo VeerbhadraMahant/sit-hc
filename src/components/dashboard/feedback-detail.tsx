@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/field";
 import { formatScore } from "@/components/dashboard/charts/scale";
 import { RISK_LABELS, STATUS_LABELS, STATUSES, type FeedbackRow, type FeedbackStatus, type RiskFlag } from "@/lib/types";
 import { cn, formatDate, timeAgo } from "@/lib/utils";
+import { FeedbackConversation } from "@/components/feedback/conversation";
 
 type Note = { id: string; created_at: string; author_name: string | null; body: string };
 
@@ -163,14 +164,8 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
             )}
           </p>
           <blockquote className="rounded-smallcards border-l-[3px] border-edge bg-white px-4 py-3 leading-relaxed whitespace-pre-wrap text-ink">
-            {f.redacted_text ?? (f.is_anonymous ? "Awaiting analysis" : f.raw_text)}
+            {f.redacted_text ?? "Awaiting analysis. Original input is held privately for processing."}
           </blockquote>
-          {!f.is_anonymous && f.raw_text && f.raw_text !== f.redacted_text && (
-            <details className="mt-2 text-sm">
-              <summary className="cursor-pointer text-pewter hover:text-ink">Original wording</summary>
-              <p className="mt-2 rounded-smallcards bg-white px-4 py-3 whitespace-pre-wrap text-ink">{f.raw_text}</p>
-            </details>
-          )}
         </div>
 
         <dl className="grid gap-4 sm:grid-cols-2">
@@ -298,6 +293,8 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
             </Button>
           </div>
         </div>
+
+        <FeedbackConversation code={f.tracking_code} hr />
 
         <div className="border-t border-mist pt-5">
           <p className="eyebrow flex items-center gap-1.5">

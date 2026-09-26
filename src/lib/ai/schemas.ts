@@ -26,6 +26,13 @@ export const AnalysisSchema = z.object({
     ),
   risk_flags: z.array(z.enum(RISK_FLAGS)).describe("Only flags clearly supported by the text; empty if none"),
   suggested_action: z.string().describe("One concrete next step HR could take (max 30 words)"),
+  sub_topic: z
+    .string()
+    .max(50)
+    .optional()
+    .describe(
+      "A 2-4 word micro-issue label capturing the specific problem within the primary theme (e.g. 'Slow laptop performance', 'VPN disconnections', 'No 1:1 meetings'). Do NOT restate the theme name.",
+    ),
 });
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
@@ -51,10 +58,16 @@ export const InsightSchema = z.object({
       z.object({
         title: z.string().describe("Imperative, specific action"),
         description: z.string(),
+        root_cause: z
+          .string()
+          .describe(
+            "The one concrete detail from the feedback that this action responds to, stated plainly — e.g. '3 engineers reported working 3 straight on-call weekends' — not a restatement of the action itself.",
+          ),
         priority: z.enum(["P1", "P2", "P3"]),
         owner: z.string().describe("Accountable role or team, e.g. 'Engineering leadership', 'HRBP – Sales'"),
         timeframe: z.string().describe("e.g. 'This week', 'Within 30 days', 'This quarter'"),
         expected_impact: z.string(),
+        evidence_ids: z.array(z.string()).describe("Reference keys like F12 of the feedback items behind root_cause"),
       }),
     )
     .max(6),

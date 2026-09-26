@@ -16,7 +16,7 @@ export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElem
 
 export const urgencyMeta: Record<
   Urgency,
-  { label: string; color: string; Icon: typeof Info; badgeCls: string }
+  { label: string; color: string; Icon: typeof Info; badgeCls: string; loud?: boolean }
 > = {
   low: {
     label: "Low",
@@ -35,15 +35,19 @@ export const urgencyMeta: Record<
     color: "var(--status-serious)",
     Icon: AlertTriangle,
     badgeCls: "bg-orange-500/10 text-orange-950 border-orange-300 font-medium",
+    loud: true,
   },
   critical: {
     label: "Critical",
     color: "var(--status-critical)",
     Icon: AlertOctagon,
     badgeCls: "bg-red-500/10 text-[#d03b3b] border-red-300 font-semibold shadow-xs",
+    loud: true,
   },
 };
 
+// Critical/high urgency gets a tinted pill (not just a small colored icon) so it's
+// unmistakable at a glance in dense lists — the whole point of flagging it as urgent.
 export function UrgencyBadge({ urgency, className }: { urgency: Urgency | null; className?: string }) {
   if (!urgency) return <Badge className={cn("text-pewter", className)}>Pending</Badge>;
   const { label, color, Icon, badgeCls } = urgencyMeta[urgency];

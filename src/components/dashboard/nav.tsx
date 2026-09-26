@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertOctagon, ClipboardList, FileUp, LayoutGrid, Megaphone, MessageSquareText, MessagesSquare, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { NavigationLink } from "@/components/ui/navigation-link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
@@ -39,29 +39,28 @@ function DashboardNavInner({ className }: { className?: string }) {
           : pathname.startsWith(href);
 
         return (
-          <Link
+          <NavigationLink
             key={href}
             href={href}
-            className={cn(
-              "inline-flex h-9 items-center gap-2 rounded-navlinks px-3.5 text-sm font-medium whitespace-nowrap transition-colors",
+            active={active}
+            Icon={Icon}
+            label={label}
+            className={
               isAlert
                 ? active
-                  ? "bg-[#d03b3b] text-white shadow-xs"
+                  ? "bg-[#d03b3b] text-white shadow-xs hover:bg-[#b83232]"
                   : "border border-red-200/80 bg-red-500/[0.06] text-[#d03b3b] hover:bg-red-500/12"
-                : active
-                ? "bg-carbon text-paper"
-                : "text-ink hover:bg-mist",
-            )}
-          >
-            <Icon className={cn("size-4", isAlert && !active && "text-[#d03b3b]")} aria-hidden />
-            {label}
-            {isAlert && (
-              <span className="relative flex size-2 shrink-0" aria-hidden>
-                <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-75", active ? "bg-white" : "bg-red-400")} />
-                <span className={cn("relative inline-flex size-2 rounded-full", active ? "bg-white" : "bg-[#d03b3b]")} />
-              </span>
-            )}
-          </Link>
+                : undefined
+            }
+            extra={
+              isAlert ? (
+                <span className="relative flex size-2 shrink-0" aria-hidden>
+                  <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-75", active ? "bg-white" : "bg-red-400")} />
+                  <span className={cn("relative inline-flex size-2 rounded-full", active ? "bg-white" : "bg-[#d03b3b]")} />
+                </span>
+              ) : undefined
+            }
+          />
         );
       })}
     </nav>

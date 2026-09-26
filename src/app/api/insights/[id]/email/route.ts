@@ -26,7 +26,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const actions = report.action_items
     .map(
       (a) =>
-        `<li style="margin-bottom:8px"><strong>[${a.priority}] ${escapeHtml(a.title)}</strong><br/><span style="color:#6b6d72">${escapeHtml(a.owner)} · ${escapeHtml(a.timeframe)}</span><br/>${escapeHtml(a.description)}</li>`,
+        `<li style="margin-bottom:8px"><strong>[${a.priority}] ${escapeHtml(a.title)}</strong><br/>${a.root_cause ? `<span style="display:inline-block;background:#fff3d6;padding:4px 8px;border-radius:4px;font-weight:600;margin:4px 0">${escapeHtml(a.root_cause)}</span><br/>` : ""}<span style="color:#6b6d72">${escapeHtml(a.owner)} · ${escapeHtml(a.timeframe)}</span><br/>${escapeHtml(a.description)}</li>`,
     )
     .join("");
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

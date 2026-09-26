@@ -36,7 +36,8 @@ export function Footer() {
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-ink">
           <Link href="/submit" className="hover:text-cobalt">Share feedback</Link>
           <Link href="/track" className="hover:text-cobalt">Track feedback</Link>
-          <Link href="/login" className="hover:text-cobalt">HR login</Link>
+          <Link href="/login?as=employee" className="hover:text-cobalt">Employee login</Link>
+          <Link href="/login?as=hr" className="hover:text-cobalt">HR login</Link>
           <Link href="#privacy" className="hover:text-cobalt">Privacy</Link>
         </nav>
       </div>

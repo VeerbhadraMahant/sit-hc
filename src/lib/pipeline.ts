@@ -27,6 +27,7 @@ export type NewFeedback = {
   /** Signed-in employee. Stored as submitter_user_id (identified) or as an HMAC hash (anonymous). */
   submitterUserId?: string | null;
   language?: string | null;
+  replyTokenHash?: string;
   /** "background": return right after the insert; caller schedules processFeedback (e.g. via after()). */
   analyze?: "sync" | "background";
 };
@@ -65,6 +66,11 @@ export async function createFeedback(input: NewFeedback): Promise<{ id: string; 
   if (error || !inserted) throw new Error(`Could not save feedback: ${error?.message}`);
 
   const id = (inserted as { id: string }).id;
+  if (input.replyTokenHash) {
+    const { error: keyError } = await db.from("feedback_private")
+      .update({ reply_token_hash: input.replyTokenHash } as never).eq("feedback_id", id);
+    if (keyError) throw new Error("Could not save private reply key.");
+  }
   if (input.analyze === "background") return { id, trackingCode, row: null };
   const row = await processFeedback(id);
   return { id, trackingCode, row };
@@ -73,12 +79,16 @@ export async function createFeedback(input: NewFeedback): Promise<{ id: string; 
 /** (Re)runs analysis for a stored feedback row. Safe to call again after a failure. */
 export async function processFeedback(id: string): Promise<FeedbackRow | null> {
   const db = createAdminClient();
-  const { data } = await db.from("feedback").select(`${PROCESSED_COLUMNS},raw_text`).eq("id", id).single();
-  const fb = data as (FeedbackRow & { raw_text: string | null }) | null;
-  if (!fb?.raw_text) return fb;
+  const { data } = await db.from("feedback").select(PROCESSED_COLUMNS).eq("id", id).single();
+  const fb = data as FeedbackRow | null;
+  if (!fb) return null;
 
   try {
-    const analysis = await analyzeFeedback({ text: fb.raw_text, department: fb.department, category: fb.category });
+    const { data: privateData, error: intakeError } = await db.from("feedback_private").select("raw_text").eq("feedback_id", id).maybeSingle();
+    const intake = privateData as { raw_text: string | null } | null;
+    if (intakeError) throw intakeError;
+    if (!intake?.raw_text) return fb;
+    const analysis = await analyzeFeedback({ text: intake.raw_text, department: fb.department, category: fb.category });
     const embedding = await embedText(`${analysis.summary}\n${analysis.redacted_text}`);
 
     const { data: updated, error } = await db
@@ -97,22 +107,26 @@ export async function processFeedback(id: string): Promise<FeedbackRow | null> {
         embedding: toPgVector(embedding),
         processing_status: "done",
         processing_error: null,
-        // Anonymous: keep only the redacted English text once analysis succeeded.
-        ...(fb.is_anonymous ? { raw_text: null } : {}),
       } as never)
       .eq("id", id)
       .select(PROCESSED_COLUMNS)
       .single();
     if (error) throw error;
 
+    if (fb.is_anonymous) {
+      const { error: clearError } = await db.from("feedback_private").update({ raw_text: null } as never).eq("feedback_id", id);
+      if (clearError) throw clearError;
+    }
+
     const row = updated as FeedbackRow;
     if (row.urgency === "critical") void alertHrOfCritical(row);
     return row;
-  } catch (err) {
-    console.error("[pipeline] analysis failed", id, err);
+  } catch {
+    // Provider errors can contain original input; never log or expose their payloads.
+    console.error("[pipeline] analysis failed", id);
     await db
       .from("feedback")
-      .update({ processing_status: "failed", processing_error: String((err as Error)?.message ?? err).slice(0, 500) } as never)
+      .update({ processing_status: "failed", processing_error: "Processing unavailable. Private input is retained for retry." } as never)
       .eq("id", id);
     return { ...fb, processing_status: "failed" };
   }

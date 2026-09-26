@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 /** Cookie-bound client that acts as the signed-in user (RLS applies). */
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-demo.supabase.co";
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
@@ -21,7 +21,7 @@ export async function createClient() {
       },
     },
   });
-}
+});
 
 export type HrUser = { id: string; email: string | undefined; fullName: string | null; role: string };
 

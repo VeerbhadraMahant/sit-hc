@@ -14,7 +14,7 @@ import { ScanUpload } from "./scan-upload";
 import { VoiceRecorder } from "./voice-recorder";
 
 type Mode = "text" | "voice" | "ocr";
-type Result = { trackingCode: string; summary: string | null; themes: string[]; processing_status: string };
+type Result = { trackingCode: string; replyKey?: string; summary: string | null; themes: string[]; processing_status: string };
 
 const MIN = 10;
 const MAX = 5000;
@@ -87,6 +87,9 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
+      if (data.replyKey) {
+        try { localStorage.setItem(`vocalyze-reply:${data.trackingCode}`, data.replyKey); } catch { /* key remains available on receipt */ }
+      }
       setResult(data);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -374,6 +377,12 @@ function SuccessScreen({ result, identified, portal }: { result: Result; identif
             </>
           )}
         </p>
+        {result.replyKey && <details className="mt-5 rounded-smallcards border border-edge p-4 text-left" open={!portal}>
+          <summary className="cursor-pointer text-sm font-medium text-ink">Save your private reply key</summary>
+          <p className="mt-2 text-sm text-pewter">This key lets you reply to HR and confirm whether an action helped. Keep it separate from your tracking code and never share it with HR. Use it on another device if needed.</p>
+          <code className="mt-3 block select-all break-all rounded-smallcards bg-mist p-3 text-xs">{result.replyKey}</code>
+          <p className="mt-2 text-xs text-pewter">We try to remember it in this browser. Save a copy in case browser storage is cleared or unavailable.</p>
+        </details>}
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <ButtonLink href={trackHref}>
             {portal ? "View in My feedback" : "Track status"} <ArrowRight className="size-4" aria-hidden />

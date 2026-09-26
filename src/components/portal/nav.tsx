@@ -1,7 +1,7 @@
 "use client";
 
 import { ClipboardList, HeartPulse, Home, Megaphone, MessageSquarePlus, MessagesSquare } from "lucide-react";
-import Link from "next/link";
+import { NavigationLink } from "@/components/ui/navigation-link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -32,17 +32,13 @@ export function PortalNav({ className }: { className?: string }) {
       {PORTAL_LINKS.map((l) => {
         const active = isActive(pathname, l.href, "exact" in l ? l.exact : undefined);
         return (
-          <Link
+          <NavigationLink
             key={l.href}
             href={l.href}
-            className={cn(
-              "inline-flex h-9 items-center gap-2 rounded-navlinks px-3.5 text-sm font-medium whitespace-nowrap transition-colors",
-              active ? "bg-carbon text-paper" : "text-ink hover:bg-mist",
-            )}
-          >
-            <l.Icon className="size-4" aria-hidden />
-            {l.label}
-          </Link>
+            active={active}
+            Icon={l.Icon}
+            label={l.label}
+          />
         );
       })}
     </nav>

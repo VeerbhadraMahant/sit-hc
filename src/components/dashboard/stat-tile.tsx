@@ -22,12 +22,14 @@ export function StatTile({
   return (
     <Card glow={glow} arc={!!glow} className="flex flex-col gap-1">
       <p className="eyebrow">{label}</p>
-      <p className="text-[40px] leading-none font-semibold tracking-[-1px] text-obsidian">{value}</p>
+      <p className="text-[28px] leading-none font-semibold tracking-[-0.5px] text-obsidian tabular-nums sm:text-[40px] sm:tracking-[-1px]">
+        {value}
+      </p>
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-pewter">
         {delta && delta.value !== 0 && (
           <span
             className={cn("inline-flex items-center gap-0.5 font-medium")}
-            style={{ color: good ? "#006300" : "var(--status-critical)" }}
+            style={{ color: good ? "var(--color-good)" : "var(--status-critical)" }}
           >
             {up ? <ArrowUpRight className="size-4" aria-hidden /> : <ArrowDownRight className="size-4" aria-hidden />}
             {delta.label}
