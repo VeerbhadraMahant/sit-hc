@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/*
+ * Pulse design tokens — adapted from the Buddy "engineering blueprint" system
+ * (refero.design). See docs/DESIGN.md for usage rules.
+ */
+:root {
+  /* Primaries */
+  --color-lime-spark: #bfff5a;
+  --color-cobalt-signal: #1a67fd;
+  --color-forest-depth: #0b3d28;
+
+  /* Neutrals */
+  --color-paper-white: #fcfcfd;
+  --color-obsidian: #0a0d16;
+  --color-carbon: #151720;
+  --color-midnight-ink: #1d2130;
+  --color-graphite: #474950;
+  --color-pewter: #6b6d72;
+  --color-silver-wash: #d6d6d7;
+  --color-slate-edge: #d5d9e8;
+  --color-mist-gray: #ebeef7;
+
+  /* Decorative accents (fills, strokes, glows only — never text/icons) */
+  --color-cyan-beam: #46d8ff;
+  --color-mint-pulse: #19f79a;
+  --color-citron-wave: #e5ed38;
+  --color-orchid-glaze: #ff9dec;
+  --color-amber-glow: #ffc650;
+  --color-mint-tint: #d8fbed;
+  --surface-amber-card: #ffd888;
+
+  --gradient-cyan-beam: radial-gradient(100% 100% at 50% 0px, rgb(122, 227, 255) 0%, rgb(70, 216, 255) 100%);
+  --gradient-mint-pulse: radial-gradient(100% 100% at 50% 0px, rgb(93, 247, 182) 0%, rgb(25, 247, 154) 100%);
+  --gradient-citron-wave: radial-gradient(100% 100% at 50% 0px, rgb(236, 241, 116) 0%, rgb(229, 237, 56) 100%);
+  --gradient-orchid-glaze: radial-gradient(100% 100% at 50% 0px, rgb(255, 181, 241) 0%, rgb(255, 157, 236) 100%);
+  --gradient-amber-glow: radial-gradient(100% 100% at 50% 0px, rgb(255, 216, 136) 0%, rgb(255, 198, 80) 100%);
+  --gradient-brushstroke: linear-gradient(90deg, #46d8ff 0%, #19f79a 35%, #e5ed38 68%, #ff9dec 100%);
+
+  /* Shadows */
+  --shadow-screenshot: rgba(29, 33, 48, 0.04) 0px 3px 3px -1px, rgba(29, 33, 48, 0.04) 0px 6px 6px -3px,
+    rgba(29, 33, 48, 0.04) 0px 12px 12px -6px, rgba(29, 33, 48, 0.04) 0px 24px 24px -12px,
+    rgba(29, 33, 48, 0.04) 0px 32px 32px -16px;
+  --shadow-bead: rgba(255, 255, 255, 0.72) 0px 1px 0px 0px inset, rgba(29, 33, 48, 0.12) 0px -2px 0px 0px inset,
+    rgba(29, 33, 48, 0.04) 0px 1px 1px -1px, rgba(29, 33, 48, 0.04) 0px 4px 4px -2px;
+  --shadow-field: rgba(255, 255, 255, 0.72) 0px 0px 0px 1px inset, rgb(213, 217, 232) 0px 0px 0px 1px,
+    rgba(29, 33, 48, 0.03) 0px 1px 1px -1px, rgba(29, 33, 48, 0.05) 0px 3px 3px -2px,
+    rgba(29, 33, 48, 0.03) 0px 5px 5px -3px, rgba(213, 217, 232, 0.22) 0px 5px 5px -2px;
+  --shadow-card-base: rgba(29, 33, 48, 0.08) 0px 0px 0px 1px, rgba(29, 33, 48, 0.04) 0px 1px 1px -1px,
+    rgba(29, 33, 48, 0.04) 0px 2px 2px -1px, rgba(29, 33, 48, 0.04) 0px 3px 3px -1.5px,
+    rgba(29, 33, 48, 0.04) 0px 5px 5px -2.5px;
+  --glow: 29, 33, 48; /* overridden per card for hue-matched glow */
+
+  /* Layout */
+  --page-max-width: 1200px;
+  --section-gap: 80px;
+
+  /* Chart roles (see docs/DESIGN.md → Data viz) */
+  --viz-positive: #2a78d6;
+  --viz-neutral: #b8bcc9;
+  --viz-negative: #e34948;
+  --viz-bar: #1a67fd;
+  --viz-grid: #ebeef7;
+  --viz-axis: #6b6d72;
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+}
+
+@theme inline {
+  --color-lime: var(--color-lime-spark);
+  --color-cobalt: var(--color-cobalt-signal);
+  --color-forest: var(--color-forest-depth);
+  --color-paper: var(--color-paper-white);
+  --color-obsidian: var(--color-obsidian);
+  --color-carbon: var(--color-carbon);
+  --color-ink: var(--color-midnight-ink);
+  --color-graphite: var(--color-graphite);
+  --color-pewter: var(--color-pewter);
+  --color-silver: var(--color-silver-wash);
+  --color-edge: var(--color-slate-edge);
+  --color-mist: var(--color-mist-gray);
+  --color-cyan: var(--color-cyan-beam);
+  --color-mint: var(--color-mint-pulse);
+  --color-citron: var(--color-citron-wave);
+  --color-orchid: var(--color-orchid-glaze);
+  --color-amber: var(--color-amber-glow);
+  --color-mint-tint: var(--color-mint-tint);
+  --color-amber-card: var(--surface-amber-card);
+  --color-good: var(--status-good);
+  --color-warning: var(--status-warning);
+  --color-serious: var(--status-serious);
+  --color-critical: var(--status-critical);
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --text-display: 80px;
+  --text-display--line-height: 0.9;
+  --text-display--letter-spacing: -3.6px;
+  --text-display-sm: 56px;
+  --text-display-sm--line-height: 0.95;
+  --text-display-sm--letter-spacing: -2.4px;
+  --text-heading: 48px;
+  --text-heading--line-height: 1;
+  --text-heading--letter-spacing: -1px;
+  --text-heading-md: 32px;
+  --text-heading-md--line-height: 1.1;
+  --text-heading-md--letter-spacing: -0.6px;
+  --text-heading-sm: 22px;
+  --text-heading-sm--line-height: 1.43;
+  --text-heading-sm--letter-spacing: -0.26px;
+  --text-subheading: 18px;
+  --text-subheading--line-height: 1.45;
+  --text-caption: 12px;
+  --text-caption--line-height: 2;
+  --text-caption--letter-spacing: 2px;
+
+  --radius-buttons: 56px;
+  --radius-cards: 24px;
+  --radius-smallcards: 14px;
+  --radius-navlinks: 44px;
+  --radius-images: 8px;
+
+  --shadow-screenshot: var(--shadow-screenshot);
+  --shadow-bead: var(--shadow-bead);
+  --shadow-field: var(--shadow-field);
+  --shadow-card: var(--shadow-card-base), rgba(var(--glow), 0.08) 0px 10px 10px -5px,
+    rgba(var(--glow), 0.08) 0px 24px 24px -8px;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--color-paper-white);
+  color: var(--color-carbon);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-lime-spark);
+  color: var(--color-obsidian);
+}
+
+@layer components {
+  /* Blueprint grid-paper canvas */
+  .grid-paper {
+    background-color: var(--color-paper-white);
+    background-image:
+      linear-gradient(to right, rgba(235, 238, 247, 0.6) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(235, 238, 247, 0.6) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .grid-paper-fade {
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 40%, transparent 100%);
+  }
+
+  /* Eyebrow label: IBM Plex Mono 12/500, 2px tracking, uppercase, pewter */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    line-height: 2;
+    text-transform: uppercase;
+    color: var(--color-pewter);
+  }
+
+  /* Gradient brushstroke under 1–2 headline keywords */
+  .brush {
+    position: relative;
+    white-space: nowrap;
+  }
+  .brush::after {
+    content: "";
+    position: absolute;
+    left: 20%;
+    width: 60%;
+    bottom: -4px;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--gradient-brushstroke);
+  }
+
+  /* Feature card top-arc gradient stroke */
+  .arc {
+    position: relative;
+    overflow: hidden;
+  }
+  .arc::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px 0 0 0;
+    background: var(--arc, var(--gradient-cyan-beam));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glow-cyan { --glow: 70, 216, 255; --arc: var(--gradient-cyan-beam); }
+  .glow-lime { --glow: 183, 255, 90; --arc: linear-gradient(#bfff5a, #bfff5a); }
+  .glow-orchid { --glow: 255, 157, 236; --arc: var(--gradient-orchid-glaze); }
+  .glow-mint { --glow: 25, 247, 154; --arc: var(--gradient-mint-pulse); }
+  .glow-amber { --glow: 255, 198, 80; --arc: var(--gradient-amber-glow); }
+  .glow-citron { --glow: 229, 237, 56; --arc: var(--gradient-citron-wave); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 1.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-ring { animation: none; }
+}
