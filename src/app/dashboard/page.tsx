@@ -162,9 +162,11 @@ export default async function OverviewPage({
           </section>
 
           <section className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader eyebrow="Trend" title="Sentiment by week" />
-              <SentimentTrendLazy data={o.weekly} />
+            <Card className="flex flex-col lg:col-span-2">
+              <CardHeader eyebrow="Trend" title="Sentiment by week" className="shrink-0" />
+              <div className="min-h-0 flex-1">
+                <SentimentTrendLazy data={o.weekly} />
+              </div>
             </Card>
 
             <Card glow="critical" arc className="flex flex-col border border-red-200/80 bg-gradient-to-b from-red-500/[0.04] to-paper">

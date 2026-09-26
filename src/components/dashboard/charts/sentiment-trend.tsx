@@ -33,8 +33,8 @@ function TooltipBox({ active, payload, label }: TooltipContentProps<number, stri
 
 export function SentimentTrendChart({ data }: { data: WeeklySentiment[] }) {
   return (
-    <div>
-      <ul className="mb-3 flex flex-wrap gap-4 text-sm text-ink" aria-label="Legend">
+    <div className="flex h-full flex-col">
+      <ul className="mb-3 flex shrink-0 flex-wrap gap-4 text-sm text-ink" aria-label="Legend">
         {[...SERIES].reverse().map((s) => (
           <li key={s.key} className="flex items-center gap-2">
             <span className="size-2.5 rounded-sm" style={{ background: s.color }} aria-hidden />
@@ -42,7 +42,9 @@ export function SentimentTrendChart({ data }: { data: WeeklySentiment[] }) {
           </li>
         ))}
       </ul>
-      <div className="h-64">
+      {/* Fills whatever height the card grows to (e.g. matching a taller sibling card)
+          instead of a fixed 256px that leaves dead space below the plot. */}
+      <div className="min-h-64 flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }} barCategoryGap="22%">
             <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
