@@ -91,13 +91,13 @@ export function Features() {
             </li>
           ))}
           <li className="hidden lg:block">
-            <div className="flex h-full flex-col justify-end rounded-cards border border-dashed border-edge p-6">
+            <Card glow="mint" arc className="flex h-full flex-col justify-end">
               <p className="eyebrow">Built on</p>
               <p className="mt-1 text-[15px] leading-relaxed text-graphite">
                 Google Gemini for language, vision and embeddings · Supabase Postgres with pgvector and row-level
                 security.
               </p>
-            </div>
+            </Card>
           </li>
         </ul>
       </div>
