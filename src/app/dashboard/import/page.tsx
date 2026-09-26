@@ -1,6 +1,6 @@
 import { ImportWorkspace } from "@/components/dashboard/import-workspace";
 
-export const metadata = { title: "Import — Pulse HR" };
+export const metadata = { title: "Import — Vocalyze HR" };
 
 export default function ImportPage() {
   return (
@@ -9,7 +9,7 @@ export default function ImportPage() {
         <p className="eyebrow">Offline channels</p>
         <h1 className="text-heading-md font-semibold text-obsidian">Import feedback</h1>
         <p className="mt-2 text-pewter">
-          Bring paper and legacy feedback into Pulse. Photograph suggestion-box slips, handwritten notes or paper survey forms and AI
+          Bring paper and legacy feedback into Vocalyze. Photograph suggestion-box slips, handwritten notes or paper survey forms and AI
           will read them (OCR, any language), split them into separate entries, and analyse each one. Imported items are stored
           anonymously.
         </p>

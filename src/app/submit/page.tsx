@@ -3,7 +3,7 @@ import { PublicHeader } from "@/components/submit/public-header";
 import { SubmitForm } from "@/components/submit/submit-form";
 
 export const metadata: Metadata = {
-  title: "Share feedback — Pulse",
+  title: "Share feedback — Vocalyze",
   description: "Share anonymous feedback with your People team by text, voice note, or a photo of a handwritten note.",
 };
 

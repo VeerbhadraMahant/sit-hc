@@ -1,5 +1,5 @@
 import "server-only";
-import { GoogleGenAI, type ContentListUnion, type GenerateContentParameters } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel, type ContentListUnion, type GenerateContentParameters } from "@google/genai";
 import type { z } from "zod";
 import { toGeminiSchema } from "./schemas";
 
@@ -51,24 +51,29 @@ export async function generateStructured<S extends z.ZodType>({
   contents,
   system,
   temperature = 0.2,
+  thinking = "low",
 }: {
   schema: S;
   contents: ContentListUnion;
   system: string;
   temperature?: number;
+  thinking?: Thinking;
 }): Promise<z.infer<S>> {
   const jsonSchema = toGeminiSchema(schema);
   let lastErr: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await generateWithFallback({
-      contents,
-      config: {
-        systemInstruction: system,
-        temperature,
-        responseMimeType: "application/json",
-        responseJsonSchema: jsonSchema,
+    const res = await generateWithFallback(
+      {
+        contents,
+        config: {
+          systemInstruction: system,
+          temperature,
+          responseMimeType: "application/json",
+          responseJsonSchema: jsonSchema,
+        },
       },
-    });
+      thinking,
+    );
     try {
       return schema.parse(JSON.parse(res.text ?? ""));
     } catch (err) {
@@ -78,15 +83,59 @@ export async function generateStructured<S extends z.ZodType>({
   throw new Error(`Model returned invalid JSON: ${String(lastErr)}`);
 }
 
+/**
+ * "low" = ThinkingLevel.LOW — the one setting every model in FALLBACK_MODELS accepts
+ * (MINIMAL and thinkingBudget:0 are each rejected by one of them). On gemini-flash-latest
+ * it removes thinking entirely and roughly halves latency. "default" = model default.
+ */
+export type Thinking = "low" | "default";
+
+function withThinking(params: Omit<GenerateContentParameters, "model">, thinking: Thinking) {
+  if (thinking === "default") return params;
+  return { ...params, config: { ...params.config, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } };
+}
+
+const isUnsupportedThinking = (err: unknown) =>
+  (err as { status?: number })?.status === 400 && /thinking/i.test(String((err as Error)?.message));
+
 /** generateContent that walks FALLBACK_MODELS when a model is overloaded. */
-export async function generateWithFallback(params: Omit<GenerateContentParameters, "model">) {
+export async function generateWithFallback(params: Omit<GenerateContentParameters, "model">, thinking: Thinking = "low") {
   let lastErr: unknown;
   for (const model of FALLBACK_MODELS) {
     try {
-      return await withRetry(() => gemini().models.generateContent({ ...params, model }), 2);
+      return await withRetry(() => gemini().models.generateContent({ ...withThinking(params, thinking), model }), 2);
     } catch (err) {
       lastErr = err;
-      if (!isRetryable(err)) throw err;
+      if (isUnsupportedThinking(err)) {
+        try {
+          return await withRetry(() => gemini().models.generateContent({ ...params, model }), 2);
+        } catch (retryErr) {
+          lastErr = retryErr;
+        }
+      } else if (!isRetryable(err)) throw err;
+    }
+  }
+  throw lastErr;
+}
+
+/** Streaming variant (first model that accepts the request wins; no mid-stream fallback). */
+export async function generateStreamWithFallback(
+  params: Omit<GenerateContentParameters, "model">,
+  thinking: Thinking = "low",
+) {
+  let lastErr: unknown;
+  for (const model of FALLBACK_MODELS) {
+    try {
+      return await withRetry(() => gemini().models.generateContentStream({ ...withThinking(params, thinking), model }), 2);
+    } catch (err) {
+      lastErr = err;
+      if (isUnsupportedThinking(err)) {
+        try {
+          return await gemini().models.generateContentStream({ ...params, model });
+        } catch (retryErr) {
+          lastErr = retryErr;
+        }
+      } else if (!isRetryable(err)) throw err;
     }
   }
   throw lastErr;

@@ -1,13 +1,14 @@
+import { ChartNoAxesColumn, HeartPulse, MessageSquareHeart, ShieldCheck } from "lucide-react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ChartNoAxesColumn, ShieldCheck, Sparkles } from "lucide-react";
+import { LoginPanel, type LoginAs } from "@/components/auth/login-panel";
 import { Logo } from "@/components/logo";
-import { LoginForm } from "@/components/dashboard/login-form";
-import { createClient, getHrUser } from "@/lib/supabase/server";
+import { getHrUser, getSessionClaims } from "@/lib/supabase/server";
 
-export const metadata = { title: "HR sign in — Pulse" };
+export const metadata: Metadata = { title: "Sign in — Vocalyze" };
 
-function safeNext(next: string | undefined) {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+function safeNext(next: unknown) {
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : null;
 }
 
 export default async function LoginPage({
@@ -16,19 +17,22 @@ export default async function LoginPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const next = safeNext(typeof sp.next === "string" ? sp.next : undefined);
+  const next = safeNext(sp.next);
+  const as: LoginAs = sp.as === "hr" || (!sp.as && next?.startsWith("/dashboard")) ? "hr" : "employee";
   let error = typeof sp.error === "string" ? sp.error : undefined;
 
-  const hr = await getHrUser();
-  if (hr) redirect(next);
-
-  // Signed in (e.g. via Google) but not provisioned as HR.
+  const session = await getSessionClaims();
   let signedInEmail: string | null = null;
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  if (data?.claims?.sub) {
-    signedInEmail = (data.claims.email as string | undefined) ?? "this account";
-    error = "not_hr";
+  if (session && error !== "auth") {
+    if (as === "hr") {
+      const hr = await getHrUser();
+      if (hr) redirect(next?.startsWith("/dashboard") ? next : "/dashboard");
+      // Signed in (e.g. via Google) but not provisioned as HR.
+      signedInEmail = session.email ?? "this account";
+      error = "not_hr";
+    } else {
+      redirect(next?.startsWith("/portal") ? next : "/portal");
+    }
   }
 
   return (
@@ -44,15 +48,16 @@ export default async function LoginPage({
         />
         <Logo className="relative text-paper" />
         <div className="relative mt-auto max-w-md">
-          <p className="eyebrow text-silver">HR Console</p>
+          <p className="eyebrow text-silver">Employees &amp; HR</p>
           <h1 className="mt-3 text-heading font-semibold">
-            Hear every voice. <span className="brush">Act</span> on what matters.
+            Every voice <span className="brush">heard</span>. Every theme acted on.
           </h1>
           <ul className="mt-10 space-y-5 text-silver">
             {[
-              { Icon: Sparkles, t: "AI themes, sentiment and risk flags on every submission" },
-              { Icon: ChartNoAxesColumn, t: "Trends by team, theme and week — at a glance" },
-              { Icon: ShieldCheck, t: "Anonymity by design: PII is redacted before you read it" },
+              { Icon: MessageSquareHeart, t: "Employees: give feedback by text, voice or a photo — and see what HR did about it" },
+              { Icon: HeartPulse, t: "Weekly wellbeing check-ins and pulse surveys, anonymous by design" },
+              { Icon: ChartNoAxesColumn, t: "HR: AI themes, sentiment and risk flags on every submission" },
+              { Icon: ShieldCheck, t: "Anonymous feedback is linked to you only by a one-way code HR can't read" },
             ].map(({ Icon, t }) => (
               <li key={t} className="flex items-start gap-3">
                 <span className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-smallcards bg-carbon">
@@ -70,7 +75,7 @@ export default async function LoginPage({
           <div className="mb-8 lg:hidden">
             <Logo />
           </div>
-          <LoginForm next={next} error={error} signedInEmail={signedInEmail} />
+          <LoginPanel key={as} initialAs={as} next={next} error={error} signedInEmail={signedInEmail} />
         </div>
       </main>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUp, LayoutGrid, MessageSquareText, MessagesSquare, Sparkles } from "lucide-react";
+import { ClipboardList, FileUp, LayoutGrid, Megaphone, MessageSquareText, MessagesSquare, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,8 @@ export const DASHBOARD_LINKS = [
   { href: "/dashboard/feedback", label: "Feedback", Icon: MessagesSquare },
   { href: "/dashboard/insights", label: "Insights", Icon: Sparkles },
   { href: "/dashboard/ask", label: "Ask AI", Icon: MessageSquareText },
+  { href: "/dashboard/surveys", label: "Surveys", Icon: ClipboardList },
+  { href: "/dashboard/updates", label: "Updates", Icon: Megaphone },
   { href: "/dashboard/import", label: "Import", Icon: FileUp },
 ] as const;
 

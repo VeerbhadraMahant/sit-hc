@@ -16,7 +16,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pulse — AI employee feedback & insights",
+  title: "Vocalyze — AI employee feedback & insights",
   description:
     "Collect employee feedback by text or voice, analyze it with AI, and give HR the themes, risks and actions that matter.",
 };

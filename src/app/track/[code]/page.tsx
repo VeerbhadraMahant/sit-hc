@@ -12,7 +12,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { lookupFeedback, normalizeCode } from "../lookup";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Feedback status — Pulse", robots: { index: false } };
+export const metadata: Metadata = { title: "Feedback status — Vocalyze", robots: { index: false } };
 
 const STATUS_HINTS: Record<FeedbackStatus, string> = {
   new: "Your feedback is safely stored and has been analysed.",

@@ -131,3 +131,49 @@ export interface InsightReport {
     expected_impact: string;
   }[];
 }
+
+// ── Employee portal ─────────────────────────────────────────────
+
+export type SurveyQuestion =
+  | { id: string; type: "scale"; prompt: string; min_label?: string; max_label?: string } // 1–5
+  | { id: string; type: "enps"; prompt: string } // 0–10
+  | { id: string; type: "choice"; prompt: string; options: string[] }
+  | { id: string; type: "text"; prompt: string; optional?: boolean };
+
+export type SurveyStatus = "draft" | "active" | "closed";
+
+export interface Survey {
+  id: string;
+  created_at: string;
+  title: string;
+  description: string | null;
+  questions: SurveyQuestion[];
+  status: SurveyStatus;
+  published_at: string | null;
+  closes_at: string | null;
+}
+
+/** answers keyed by question id: number for scale/enps, string for choice/text */
+export type SurveyAnswers = Record<string, number | string>;
+
+export interface CheckIn {
+  id: string;
+  created_at: string;
+  week: string;
+  mood: number;
+  energy: number;
+  note: string | null;
+}
+
+export interface UpdatePost {
+  id: string;
+  created_at: string;
+  title: string;
+  body: string;
+  theme: string | null;
+  department: string | null;
+  feedback_count: number | null;
+  published_at: string | null;
+}
+
+export const MOOD_LABELS = ["Struggling", "Low", "Okay", "Good", "Great"] as const;

@@ -1,6 +1,6 @@
-# Pulse — AI-Powered Employee Feedback & Insights
+# Vocalyze — AI-Powered Employee Feedback & Insights
 
-Employees share feedback by **text, voice note, or a photo of a handwritten note**. Pulse transcribes it, translates it, redacts personal details, and analyzes it with Gemini. HR gets a dashboard of **themes, sentiment, risks, and prioritized actions**, and can ask questions of all feedback in plain English.
+Employees share feedback by **text, voice note, or a photo of a handwritten note**. Vocalyze transcribes it, translates it, redacts personal details, and analyzes it with Gemini. HR gets a dashboard of **themes, sentiment, risks, and prioritized actions**, and can ask questions of all feedback in plain English.
 
 ## Features
 

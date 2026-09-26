@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { Screenshot } from "@/components/landing/screenshot";
 import { Card } from "@/components/ui/card";
 
 const DEPTS = ["Engineering", "Sales", "Support", "Operations", "Design"];
@@ -19,13 +20,6 @@ function cellColor(v: number) {
   return Math.abs(v) < 0.08 ? "#e3e6ee" : `rgba(${pole}, ${0.15 + a * 0.75})`;
 }
 
-const ACTIONS = [
-  { p: "P1", t: "Cap weekend on-call for Engineering", o: "Eng leadership · This week" },
-  { p: "P1", t: "Audit Operations loading-bay safety", o: "Facilities · 48 hours" },
-  { p: "P2", t: "Publish a Sales career ladder", o: "HRBP Sales · 30 days" },
-  { p: "P3", t: "Quarterly skip-level listening sessions", o: "People team · This quarter" },
-];
-
 export function ForHr() {
   return (
     <section id="hr" className="scroll-mt-20 py-20 lg:py-28">
@@ -38,7 +32,7 @@ export function ForHr() {
             </h2>
           </div>
           <p className="max-w-[520px] text-subheading text-graphite lg:justify-self-end">
-            Generate a leadership-ready brief for any team and time period. Pulse cites the feedback behind every
+            Generate a leadership-ready brief for any team and time period. Vocalyze cites the feedback behind every
             concern, so you can defend every recommendation.
           </p>
         </div>
@@ -52,32 +46,19 @@ export function ForHr() {
               </span>
             </div>
             <h3 className="mt-3 text-heading-sm font-semibold text-ink">
-              Morale is recovering overall, but Engineering burnout is now the top risk.
+              Every report reads like it was written by an analyst who never sleeps.
             </h3>
             <p className="mt-3 text-[15px] leading-relaxed text-graphite">
-              Average sentiment rose from −0.08 to +0.21 after the hybrid-work policy change. However, 38% of
-              Engineering responses mention unplanned weekend work, and two resignation signals appeared in the last
-              week. Sales feedback points to unclear promotion criteria.
+              A real report, generated from real feedback in this demo — headline, evidence-linked concerns, bright
+              spots, and a prioritized action plan with owners and timeframes.
             </p>
-            <ul className="mt-6 divide-y divide-mist border-t border-mist">
-              {ACTIONS.map((a) => (
-                <li key={a.t} className="flex items-center gap-3 py-3">
-                  <span
-                    className={
-                      a.p === "P1"
-                        ? "rounded-full bg-carbon px-2 py-0.5 font-mono text-[11px] text-paper"
-                        : "rounded-full border border-edge px-2 py-0.5 font-mono text-[11px] text-ink"
-                    }
-                  >
-                    {a.p}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[15px] font-medium text-ink">{a.t}</p>
-                    <p className="text-xs text-pewter">{a.o}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-5">
+              <Screenshot
+                src="/screenshots/insights.png"
+                alt="An AI-generated Vocalyze insight report showing the executive summary and top concerns"
+                aspect="16/11"
+              />
+            </div>
           </Card>
 
           <Card className="lg:col-span-2" glow="cyan">

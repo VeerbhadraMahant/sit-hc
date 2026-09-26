@@ -23,7 +23,7 @@ export async function sendEmail({
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "Pulse <onboarding@resend.dev>",
+        from: process.env.EMAIL_FROM || "Vocalyze <onboarding@resend.dev>",
         to,
         subject,
         html,
@@ -45,7 +45,7 @@ export async function sendEmail({
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-/** Shared email shell in the Pulse visual language. */
+/** Shared email shell in the Vocalyze visual language. */
 export function emailLayout({ eyebrow, title, body, cta }: { eyebrow: string; title: string; body: string; cta?: { label: string; href: string } }) {
   return `<!doctype html><html><body style="margin:0;background:#fcfcfd;font-family:'IBM Plex Sans',Segoe UI,Arial,sans-serif;color:#151720">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px"><tr><td align="center">
@@ -54,7 +54,7 @@ export function emailLayout({ eyebrow, title, body, cta }: { eyebrow: string; ti
 <tr><td style="padding-top:8px;font-size:24px;font-weight:600;letter-spacing:-.3px;color:#0a0d16">${esc(title)}</td></tr>
 <tr><td style="padding-top:16px;font-size:15px;line-height:1.6;color:#1d2130">${body}</td></tr>
 ${cta ? `<tr><td style="padding-top:24px"><a href="${esc(cta.href)}" style="display:inline-block;background:#bfff5a;color:#0a0d16;text-decoration:none;font-weight:500;padding:14px 28px;border-radius:56px">${esc(cta.label)}</a></td></tr>` : ""}
-<tr><td style="padding-top:32px;font-size:12px;color:#6b6d72">Sent by Pulse · AI employee feedback &amp; insights</td></tr>
+<tr><td style="padding-top:32px;font-size:12px;color:#6b6d72">Sent by Vocalyze · AI employee feedback &amp; insights</td></tr>
 </table></td></tr></table></body></html>`;
 }
 

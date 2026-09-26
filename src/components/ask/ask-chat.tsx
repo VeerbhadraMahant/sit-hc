@@ -26,7 +26,21 @@ type Source = {
 
 type Message =
   | { role: "user"; content: string }
-  | { role: "assistant"; content: string; sources: Source[]; follow_ups: string[] };
+  | {
+      role: "assistant";
+      content: string;
+      /** Every retrieved source (lets [F#] chips link while streaming); narrowed to cited ones when done. */
+      sources: Source[];
+      follow_ups: string[];
+      streaming?: boolean;
+    };
+
+type AskEvent =
+  | { type: "sources"; sources: Source[] }
+  | { type: "delta"; text: string }
+  | { type: "reset" }
+  | { type: "done"; cited: string[]; follow_ups: string[] }
+  | { type: "error"; message: string };
 
 const SUGGESTIONS = [
   "What's driving negative sentiment in Engineering?",
@@ -99,21 +113,68 @@ export function AskChat() {
     setMessages((prev) => [...prev, { role: "user", content: q }]);
     setInput("");
     setLoading(true);
+
+    // Updates the in-flight assistant message (always the last one once created).
+    const patchAssistant = (fn: (m: Extract<Message, { role: "assistant" }>) => Extract<Message, { role: "assistant" }>) =>
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (!last || last.role !== "assistant") return prev;
+        return [...prev.slice(0, -1), fn(last)];
+      });
+
+    let started = false;
     try {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, department: department || null, history }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Something went wrong");
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: json.answer, sources: json.sources ?? [], follow_ups: json.follow_ups ?? [] },
-      ]);
+      if (!res.ok || !res.body) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error ?? "Something went wrong");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let pending = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        pending += decoder.decode(value, { stream: true });
+        const lines = pending.split("\n");
+        pending = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line) as AskEvent;
+          if (event.type === "sources") {
+            started = true;
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: "", sources: event.sources, follow_ups: [], streaming: true },
+            ]);
+          } else if (event.type === "delta") {
+            patchAssistant((m) => ({ ...m, content: m.content + event.text }));
+          } else if (event.type === "reset") {
+            // The model was overloaded mid-answer; a fallback model is restarting it.
+            patchAssistant((m) => ({ ...m, content: "" }));
+          } else if (event.type === "done") {
+            const cited = new Set(event.cited);
+            patchAssistant((m) => ({
+              ...m,
+              sources: m.sources.filter((s) => cited.has(s.key)),
+              follow_ups: event.follow_ups,
+              streaming: false,
+            }));
+          } else if (event.type === "error") {
+            throw new Error(event.message);
+          }
+        }
+      }
+      patchAssistant((m) => ({ ...m, streaming: false }));
     } catch (err) {
       toast.error((err as Error).message);
-      setMessages((prev) => prev.slice(0, -1));
+      // Drop the partial answer (if any) and the question, and give the question back for a retry.
+      setMessages((prev) => prev.slice(0, started ? -2 : -1));
       setInput(q);
     } finally {
       setLoading(false);
@@ -161,7 +222,7 @@ export function AskChat() {
               <div>
                 <h2 className="text-heading-sm font-semibold text-ink">Your feedback, searchable in plain English</h2>
                 <p className="mt-1 max-w-xl text-pewter">
-                  Pulse finds the most relevant feedback by meaning, not keywords, then answers with citations you can
+                  Vocalyze finds the most relevant feedback by meaning, not keywords, then answers with citations you can
                   open. Employee identities are never revealed.
                 </p>
               </div>
@@ -195,12 +256,19 @@ export function AskChat() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <Card className="text-[15px] leading-relaxed text-carbon">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} urlTransform={(u) => u}>
-                      {withCitationLinks(m.content, m.sources)}
-                    </ReactMarkdown>
+                    {m.content ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} urlTransform={(u) => u}>
+                        {withCitationLinks(m.content, m.sources)}
+                      </ReactMarkdown>
+                    ) : (
+                      <span className="text-pewter">Drafting an answer…</span>
+                    )}
+                    {m.streaming && (
+                      <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse rounded-sm bg-cobalt align-middle" aria-hidden />
+                    )}
                   </Card>
 
-                  {m.sources.length > 0 && (
+                  {!m.streaming && m.sources.length > 0 && (
                     <div className="mt-3">
                       <p className="eyebrow mb-2">Sources · {m.sources.length}</p>
                       <div className="flex snap-x gap-3 overflow-x-auto pb-2">
@@ -248,12 +316,12 @@ export function AskChat() {
           ),
         )}
 
-        {loading && (
+        {loading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex items-center gap-3 text-sm text-pewter">
             <div className="flex size-8 items-center justify-center rounded-full bg-mist">
               <Loader2 className="size-4 animate-spin text-ink" />
             </div>
-            Searching feedback and drafting an answer…
+            Searching feedback by meaning…
           </div>
         )}
         <div ref={endRef} />

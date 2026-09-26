@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { emailLayout, escapeHtml, sendEmail } from "@/lib/email";
+import { feedbackRecipientHash, notify } from "@/lib/notify";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient, getHrUser } from "@/lib/supabase/server";
-import { FEEDBACK_COLUMNS, STATUSES, type FeedbackRow } from "@/lib/types";
+import { FEEDBACK_COLUMNS, STATUS_LABELS, STATUSES, type FeedbackRow } from "@/lib/types";
 
 const PatchSchema = z
   .object({
@@ -60,6 +62,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }),
     });
     emailed = result.ok;
+  }
+
+  // In-app notification for signed-in submitters (identified or anonymous-by-hash). The HR user
+  // client can't read submitter_hash, so the link is resolved with the service role.
+  const statusChanged = patch.status !== undefined && patch.status !== prev.status;
+  if (responseChanged || statusChanged) {
+    const { data: link } = await createAdminClient()
+      .from("feedback")
+      .select("submitter_user_id,submitter_hash,tracking_code")
+      .eq("id", id)
+      .maybeSingle();
+    const target = link as { submitter_user_id: string | null; submitter_hash: string | null; tracking_code: string } | null;
+    const hash = target ? feedbackRecipientHash(target) : null;
+    if (hash && target) {
+      const responded = responseChanged && !!response;
+      after(() =>
+        notify({
+          recipient: { hash },
+          type: responded ? "feedback_response" : "feedback_status",
+          title: responded ? "HR responded to your feedback" : `Your feedback is now “${STATUS_LABELS[row.status]}”`,
+          body: responded ? response!.slice(0, 200) : row.summary,
+          link: `/portal/feedback/${target.tracking_code}`,
+        }),
+      );
+    }
   }
 
   return NextResponse.json({ feedback: row, emailed });

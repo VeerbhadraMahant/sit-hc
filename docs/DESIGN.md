@@ -1,4 +1,4 @@
-# Pulse design system
+# Vocalyze design system
 
 Adapted from the Buddy.works style on Refero
 (https://styles.refero.design/style/1329b661-39d8-4f0b-a12a-11ed13671ccb).

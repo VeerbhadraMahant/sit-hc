@@ -23,10 +23,14 @@ export async function middleware(request: NextRequest) {
   // getClaims() verifies the JWT locally (no network round trip for asymmetric keys).
   const { data } = await supabase.auth.getClaims();
 
-  if (!data?.claims && request.nextUrl.pathname.startsWith("/dashboard")) {
+  const path = request.nextUrl.pathname;
+  const area = path.startsWith("/dashboard") ? "hr" : path.startsWith("/portal") ? "employee" : null;
+  if (!data?.claims && area) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
-    login.searchParams.set("next", request.nextUrl.pathname);
+    login.search = "";
+    login.searchParams.set("as", area);
+    login.searchParams.set("next", path);
     return NextResponse.redirect(login);
   }
 
@@ -34,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/portal/:path*", "/login"],
 };

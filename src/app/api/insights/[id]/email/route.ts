@@ -33,7 +33,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const result = await sendEmail({
     to,
-    subject: `Pulse insight report — ${report.headline}`,
+    subject: `Vocalyze insight report — ${report.headline}`,
     html: emailLayout({
       eyebrow: `Insight report · ${period}${report.department ? ` · ${report.department}` : ""}`,
       title: report.headline,

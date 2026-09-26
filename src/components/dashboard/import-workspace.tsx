@@ -2,7 +2,7 @@
 
 import { CheckCircle2, FileImage, FileText, Loader2, ScanText, TableProperties, TriangleAlert, Upload, X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SentimentBadge, UrgencyBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -32,6 +32,22 @@ type Job = {
 };
 
 const ACCEPT = "image/png,image/jpeg,image/webp,image/heic,image/heif,application/pdf";
+/** Uploads in flight at once. The server stores entries and analyses them after responding. */
+const CONCURRENCY = 3;
+const POLL_MS = 3000;
+
+/** Runs fn over items with at most `limit` in flight. */
+async function eachLimit<T>(items: T[], limit: number, fn: (item: T, index: number) => Promise<void>) {
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (next < items.length) {
+        const i = next++;
+        await fn(items[i], i);
+      }
+    }),
+  );
+}
 
 /** Minimal CSV line splitter that respects double quotes. */
 function splitCsv(line: string) {
@@ -90,6 +106,33 @@ export function ImportWorkspace() {
 
   const updateJob = (key: string, patch: Partial<Job>) => setJobs((js) => js.map((j) => (j.key === key ? { ...j, ...patch } : j)));
 
+  // Poll analysis results for items that were stored but not yet analysed.
+  const pendingIds = jobs.flatMap((j) => j.items.filter((it) => it.processing === "pending").map((it) => it.id));
+  const pendingKey = pendingIds.join(",");
+  useEffect(() => {
+    if (!pendingKey) return;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/import?ids=${pendingKey.split(",").slice(0, 100).join(",")}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const { items } = (await res.json()) as { items: (Partial<Item> & { id: string })[] };
+        const byId = new Map(items.map((i) => [i.id, i]));
+        setJobs((js) =>
+          js.map((j) => ({
+            ...j,
+            items: j.items.map((it) => {
+              const u = byId.get(it.id);
+              return u ? { ...it, ...u, processing: u.processing ?? it.processing } : it;
+            }),
+          })),
+        );
+      } catch {
+        /* transient — next tick retries */
+      }
+    }, POLL_MS);
+    return () => clearTimeout(t);
+  }, [pendingKey, jobs]);
+
   function addFiles(list: FileList | null) {
     if (!list) return;
     setFiles((f) => [...f, ...Array.from(list).filter((x) => ACCEPT.split(",").includes(x.type))].slice(0, 25));
@@ -107,12 +150,12 @@ export function ImportWorkspace() {
     setRunning(true);
     const toSend = files;
     setFiles([]);
-    for (let i = 0; i < toSend.length; i++) {
+    await eachLimit(toSend, CONCURRENCY, async (file, i) => {
       const job = queue[i];
       updateJob(job.key, { status: "running" });
       try {
         const body = new FormData();
-        body.set("file", toSend[i]);
+        body.set("file", file);
         if (department) body.set("department", department);
         const res = await fetch("/api/import", { method: "POST", body });
         const json = await res.json();
@@ -125,7 +168,7 @@ export function ImportWorkspace() {
       } catch (e) {
         updateJob(job.key, { status: "error", message: (e as Error).message });
       }
-    }
+    });
     setRunning(false);
   }
 
@@ -142,14 +185,14 @@ export function ImportWorkspace() {
     setJobs((j) => [...queue, ...j]);
     setRunning(true);
     setPasted("");
-    for (let i = 0; i < rows.length; i++) {
+    await eachLimit(rows, CONCURRENCY, async (row, i) => {
       const job = queue[i];
       updateJob(job.key, { status: "running" });
       try {
         const res = await fetch("/api/import", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: rows[i].text, department: rows[i].department ?? (department || null) }),
+          body: JSON.stringify({ text: row.text, department: row.department ?? (department || null) }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Import failed");
@@ -157,7 +200,7 @@ export function ImportWorkspace() {
       } catch (e) {
         updateJob(job.key, { status: "error", message: (e as Error).message });
       }
-    }
+    });
     setRunning(false);
   }
 
@@ -278,6 +321,12 @@ export function ImportWorkspace() {
             )
           }
         />
+        {pendingIds.length > 0 && (
+          <p className="-mt-2 mb-3 flex items-center gap-1.5 text-xs text-pewter" aria-live="polite">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden /> AI is analysing {pendingIds.length} item
+            {pendingIds.length === 1 ? "" : "s"} in the background…
+          </p>
+        )}
         {jobs.length > 0 && (
           <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-mist" role="progressbar" aria-valuenow={done} aria-valuemax={jobs.length}>
             <div className="h-full rounded-full bg-cobalt transition-[width]" style={{ width: `${(done / jobs.length) * 100}%` }} />
@@ -312,8 +361,18 @@ export function ImportWorkspace() {
                       <li key={it.id}>
                         <Link href={`/dashboard/feedback?id=${it.id}`} className="block rounded-lg bg-white px-3 py-2 hover:bg-mist/60">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <UrgencyBadge urgency={it.urgency} />
-                            <SentimentBadge sentiment={it.sentiment} />
+                            {it.processing === "pending" ? (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-mist bg-paper px-2.5 py-0.5 text-xs font-medium text-pewter">
+                                <Loader2 className="size-3 animate-spin" aria-hidden /> Analyzing…
+                              </span>
+                            ) : it.processing === "failed" ? (
+                              <span className="rounded-full bg-mist px-2.5 py-0.5 text-xs font-medium text-ink">Analysis failed</span>
+                            ) : (
+                              <>
+                                <UrgencyBadge urgency={it.urgency} />
+                                <SentimentBadge sentiment={it.sentiment} />
+                              </>
+                            )}
                             {(it.themes ?? []).slice(0, 2).map((t) => (
                               <span key={t} className="text-xs text-pewter">
                                 #{t}

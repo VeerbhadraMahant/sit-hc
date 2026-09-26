@@ -78,19 +78,53 @@ export interface Overview {
   channels: { channel: string; count: number }[];
   risks: { flag: RiskFlag; count: number }[];
   emotions: { emotion: string; count: number }[];
-  needsAttention: FeedbackRow[];
+  needsAttention: AggRow[];
 }
 
-export async function fetchFeedbackSince(sinceIso: string): Promise<FeedbackRow[]> {
+/** Only what the overview aggregates need — no free text beyond the one-line summary, no PII. */
+const AGG_COLUMNS =
+  "id,created_at,department,channel,sentiment,sentiment_score,themes,emotions,urgency,status,risk_flags,responded_at,summary";
+
+export type AggRow = Pick<
+  FeedbackRow,
+  | "id"
+  | "created_at"
+  | "department"
+  | "channel"
+  | "sentiment"
+  | "sentiment_score"
+  | "themes"
+  | "emotions"
+  | "urgency"
+  | "status"
+  | "risk_flags"
+  | "responded_at"
+  | "summary"
+>;
+
+async function fetchAggRows(sinceIso: string): Promise<AggRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("feedback")
-    .select(FEEDBACK_COLUMNS)
+    .select(AGG_COLUMNS)
     .gte("created_at", sinceIso)
     .order("created_at", { ascending: false })
     .limit(5000);
   if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as FeedbackRow[];
+  return (data ?? []) as unknown as AggRow[];
+}
+
+/** The previous period only feeds two KPI deltas: row count and average sentiment. */
+async function fetchPreviousScores(fromIso: string, toIso: string): Promise<(number | null)[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("feedback")
+    .select("sentiment_score")
+    .gte("created_at", fromIso)
+    .lt("created_at", toIso)
+    .limit(5000);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as { sentiment_score: number | null }[]).map((r) => r.sentiment_score);
 }
 
 function countBy<T>(items: T[], key: (t: T) => string[] | string | null | undefined) {
@@ -107,23 +141,25 @@ export async function getOverview(periodDays: PeriodDays): Promise<Overview> {
   const now = Date.now();
   const start = now - periodDays * DAY;
   const prevStart = start - periodDays * DAY;
-  const all = await fetchFeedbackSince(new Date(prevStart).toISOString());
-  const rows = all.filter((r) => new Date(r.created_at).getTime() >= start);
-  const prev = all.filter((r) => new Date(r.created_at).getTime() < start);
+  const startIso = new Date(start).toISOString();
+  const [rows, prevScores] = await Promise.all([
+    fetchAggRows(startIso),
+    fetchPreviousScores(new Date(prevStart).toISOString(), startIso),
+  ]);
 
   const scored = rows.filter((r) => r.sentiment_score != null);
   const analysed = rows.filter((r) => r.sentiment);
-  const responded = rows.filter((r) => r.hr_response && r.responded_at);
+  const responded = rows.filter((r) => r.responded_at);
   const responseHours = responded.map(
     (r) => (new Date(r.responded_at!).getTime() - new Date(r.created_at).getTime()) / 3_600_000,
   );
 
   const kpis: Kpis = {
     total: rows.length,
-    previousTotal: prev.length,
-    deltaPct: prev.length ? ((rows.length - prev.length) / prev.length) * 100 : null,
+    previousTotal: prevScores.length,
+    deltaPct: prevScores.length ? ((rows.length - prevScores.length) / prevScores.length) * 100 : null,
     avgSentiment: avg(scored.map((r) => r.sentiment_score!)),
-    previousAvgSentiment: avg(prev.filter((r) => r.sentiment_score != null).map((r) => r.sentiment_score!)),
+    previousAvgSentiment: avg(prevScores.filter((x): x is number => x != null)),
     pctNegative: analysed.length ? (analysed.filter((r) => r.sentiment === "negative").length / analysed.length) * 100 : null,
     openUrgent: rows.filter(
       (r) => (r.urgency === "critical" || r.urgency === "high") && (r.status === "new" || r.status === "in_review"),
@@ -165,10 +201,12 @@ export async function getOverview(periodDays: PeriodDays): Promise<Overview> {
     .sort((a, b) => b.count - a.count);
 
   // Departments
-  const deptMap = new Map<string, FeedbackRow[]>();
+  const deptMap = new Map<string, AggRow[]>();
   for (const r of rows) {
     const d = r.department || "Unspecified";
-    deptMap.set(d, [...(deptMap.get(d) ?? []), r]);
+    const bucket = deptMap.get(d);
+    if (bucket) bucket.push(r);
+    else deptMap.set(d, [r]);
   }
   const departments: DeptStat[] = [...deptMap.entries()]
     .map(([department, rs]) => ({
@@ -253,10 +291,16 @@ export function readFilters(sp: Record<string, string | string[] | undefined>): 
   };
 }
 
-/** Filtered feedback list for the inbox and CSV export. */
-export async function listFeedback(f: FeedbackFilters, limit = 500): Promise<FeedbackRow[]> {
-  const supabase = await createClient();
-  let q = supabase.from("feedback").select(FEEDBACK_COLUMNS).order("created_at", { ascending: false }).limit(limit);
+// Loose builder type: the untyped client's PostgREST generics are unwieldy to spell out.
+type Filterable = {
+  eq(column: string, value: unknown): Filterable;
+  contains(column: string, value: unknown): Filterable;
+  gte(column: string, value: unknown): Filterable;
+  or(filters: string): Filterable;
+};
+
+function applyFilters<Q>(query: Q, f: FeedbackFilters): Q {
+  let q = query as unknown as Filterable;
   if (f.department) q = q.eq("department", f.department);
   if (f.theme) q = q.contains("themes", [f.theme]);
   if (f.sentiment) q = q.eq("sentiment", f.sentiment);
@@ -265,12 +309,64 @@ export async function listFeedback(f: FeedbackFilters, limit = 500): Promise<Fee
   if (f.channel) q = q.eq("channel", f.channel);
   if (f.days) q = q.gte("created_at", new Date(Date.now() - f.days * DAY).toISOString());
   if (f.q) {
+    // pg_trgm GIN indexes on summary + redacted_text back these ilike scans.
     const term = f.q.replace(/[%,()*]/g, " ").trim();
     if (term) q = q.or(`summary.ilike.*${term}*,redacted_text.ilike.*${term}*,tracking_code.ilike.*${term}*`);
   }
+  return q as unknown as Q;
+}
+
+/** Full-column filtered list — used by the CSV export. */
+export async function listFeedback(f: FeedbackFilters, limit = 500): Promise<FeedbackRow[]> {
+  const supabase = await createClient();
+  const q = applyFilters(
+    supabase.from("feedback").select(FEEDBACK_COLUMNS).order("created_at", { ascending: false }).limit(limit),
+    f,
+  );
   const { data, error } = await q;
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as FeedbackRow[];
+}
+
+export const INBOX_PAGE_SIZE = 100;
+
+const LIST_COLUMNS = "id,created_at,tracking_code,channel,urgency,sentiment,processing_status,summary,department,themes,status";
+
+export type ListRow = Pick<
+  FeedbackRow,
+  | "id"
+  | "created_at"
+  | "tracking_code"
+  | "channel"
+  | "urgency"
+  | "sentiment"
+  | "processing_status"
+  | "summary"
+  | "department"
+  | "themes"
+  | "status"
+>;
+
+/** One inbox page with only the columns the list renders (keeps the RSC payload small). */
+export async function listFeedbackPage(
+  f: FeedbackFilters,
+  page = 1,
+): Promise<{ rows: ListRow[]; total: number; page: number; hasMore: boolean }> {
+  const supabase = await createClient();
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const from = (safePage - 1) * INBOX_PAGE_SIZE;
+  const q = applyFilters(
+    supabase
+      .from("feedback")
+      .select(LIST_COLUMNS, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, from + INBOX_PAGE_SIZE - 1),
+    f,
+  );
+  const { data, error, count } = await q;
+  if (error) throw new Error(error.message);
+  const total = count ?? 0;
+  return { rows: (data ?? []) as unknown as ListRow[], total, page: safePage, hasMore: from + INBOX_PAGE_SIZE < total };
 }
 
 export async function getFeedbackDetail(id: string) {

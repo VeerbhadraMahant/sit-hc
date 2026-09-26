@@ -65,6 +65,8 @@ export function computeStats(rows: Row[], from: Date, to: Date) {
   return lines.join("\n");
 }
 
+const PROMPT_ITEM_CAP = 150;
+
 export async function generateInsightReport({
   from,
   to,
@@ -97,8 +99,16 @@ export async function generateInsightReport({
     };
   }
 
+  // Prompt size drives latency: list at most PROMPT_ITEM_CAP items, keeping every high/critical
+  // or risk-flagged one first, then the newest of the rest. Statistics still cover all rows.
+  const priority = (r: Row) => (r.urgency === "critical" ? 0 : r.urgency === "high" || r.risk_flags?.length ? 1 : 2);
+  const selected = [...rows]
+    .map((r, i) => ({ r, i })) // rows arrive newest-first, so i is recency rank
+    .sort((a, b) => priority(a.r) - priority(b.r) || a.i - b.i)
+    .slice(0, PROMPT_ITEM_CAP)
+    .map(({ r }) => r);
   // Oldest first reads more naturally as a timeline.
-  const ordered = [...rows].reverse();
+  const ordered = selected.sort((a, b) => a.created_at.localeCompare(b.created_at));
   const keyToId = new Map<string, string>();
   const lines = ordered.map((r, i) => {
     const key = `F${i + 1}`;
@@ -114,7 +124,7 @@ export async function generateInsightReport({
 ## Statistics
 ${computeStats(rows, from, to)}
 
-## Feedback items
+## Feedback items${ordered.length < rows.length ? ` (${ordered.length} of ${rows.length}: all urgent/risk-flagged items plus the most recent others — use the statistics for counts)` : ""}
 ${lines.join("\n")}
 
 Write the leadership briefing.`;

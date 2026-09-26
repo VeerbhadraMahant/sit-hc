@@ -1,4 +1,4 @@
--- Pulse — initial schema
+-- Vocalyze — initial schema
 -- Employees never talk to these tables directly: submissions and tracking go
 -- through Next.js route handlers using the service role. HR users read and
 -- update through RLS policies gated by public.is_hr().

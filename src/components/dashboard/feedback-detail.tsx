@@ -2,7 +2,6 @@
 
 import { Languages, Loader2, Lock, Mail, RefreshCw, Send, ShieldAlert, User, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge, SentimentBadge, UrgencyBadge } from "@/components/ui/badge";
@@ -18,7 +17,6 @@ type Note = { id: string; created_at: string; author_name: string | null; body: 
 const CHANNEL_LABEL = { text: "Written", voice: "Voice note", ocr: "Scanned document" } as const;
 
 export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { feedback: FeedbackRow; notes: Note[]; closeHref: string }) {
-  const router = useRouter();
   const [f, setF] = useState(feedback);
   const [notes, setNotes] = useState(initialNotes);
   const [response, setResponse] = useState(feedback.hr_response ?? "");
@@ -27,6 +25,9 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
 
   async function patch(body: Record<string, unknown>, kind: "status" | "response") {
     setBusy(kind);
+    const before = f;
+    // Optimistic: flip the status pill immediately, roll back if the server rejects it.
+    if (kind === "status") setF((cur) => ({ ...cur, status: body.status as FeedbackStatus }));
     try {
       const res = await fetch(`/api/feedback/${f.id}`, {
         method: "PATCH",
@@ -39,8 +40,8 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
       if (kind === "response")
         toast.success(json.emailed ? "Response saved and emailed to the employee" : "Response saved — visible on their tracking page");
       else toast.success("Status updated");
-      router.refresh();
     } catch (e) {
+      if (kind === "status") setF(before);
       toast.error((e as Error).message);
     } finally {
       setBusy(null);
@@ -75,7 +76,6 @@ export function FeedbackDetail({ feedback, notes: initialNotes, closeHref }: { f
       if (json.feedback) setF(json.feedback);
       if (!res.ok) throw new Error(json.error ?? "Analysis failed");
       toast.success("AI analysis complete");
-      router.refresh();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {

@@ -2,7 +2,7 @@
 
 import { ArrowRight, Check, Copy, EyeOff, Loader2, Lock, Mic, PenLine, ScanLine, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,14 +19,23 @@ type Result = { trackingCode: string; summary: string | null; themes: string[]; 
 const MIN = 10;
 const MAX = 5000;
 
-export function SubmitForm() {
+type SubmitFormProps = {
+  /** "portal" = signed-in employee: identified mode uses the account email; success links into the portal. */
+  mode?: "public" | "portal";
+  defaultName?: string | null;
+  defaultEmail?: string | null;
+  defaultDepartment?: string | null;
+};
+
+export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmail, defaultDepartment }: SubmitFormProps = {}) {
+  const portal = formMode === "portal";
   const [mode, setMode] = useState<Mode>("text");
   const [texts, setTexts] = useState<Record<Mode, string>>({ text: "", voice: "", ocr: "" });
   const [languages, setLanguages] = useState<Record<Mode, string | null>>({ text: null, voice: null, ocr: null });
-  const [department, setDepartment] = useState("");
+  const [department, setDepartment] = useState(defaultDepartment ?? "");
   const [category, setCategory] = useState("");
   const [anonymous, setAnonymous] = useState(true);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(defaultName ?? "");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -72,7 +81,7 @@ export function SubmitForm() {
           category: category || null,
           isAnonymous: anonymous,
           name: anonymous ? null : name || null,
-          email: anonymous ? null : email || null,
+          email: anonymous || portal ? null : email || null,
           language: languages[mode],
         }),
       });
@@ -87,7 +96,8 @@ export function SubmitForm() {
     }
   }
 
-  if (result) return <SuccessScreen result={result} identified={!anonymous && !!email} />;
+  if (result)
+    return <SuccessScreen result={result} identified={!anonymous && (portal ? !!defaultEmail : !!email)} portal={portal} />;
 
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
@@ -198,7 +208,9 @@ export function SubmitForm() {
           <ul className="mt-5 grid gap-3 text-sm text-ink sm:grid-cols-3">
             <li className="flex gap-2 rounded-smallcards bg-mist/60 p-3">
               <EyeOff className="size-4 shrink-0 text-ink" aria-hidden />
-              No name, email or account is stored.
+              {portal
+                ? "No name or email is stored — only a one-way code HR can't read, so you can follow it here."
+                : "No name, email or account is stored."}
             </li>
             <li className="flex gap-2 rounded-smallcards bg-mist/60 p-3">
               <ShieldCheck className="size-4 shrink-0 text-ink" aria-hidden />
@@ -215,18 +227,27 @@ export function SubmitForm() {
               <Label htmlFor="name">Name</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={120} />
             </div>
-            <div>
-              <Label htmlFor="email">Work email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                maxLength={200}
-                placeholder="We'll email your tracking code"
-              />
-            </div>
+            {portal ? (
+              <div>
+                <p className="mb-2 block text-sm font-medium text-ink">Work email</p>
+                <p className="flex h-12 items-center truncate rounded-smallcards bg-mist/60 px-4 text-ink">
+                  {defaultEmail ?? "Your account email"}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="email">Work email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  maxLength={200}
+                  placeholder="We'll email your tracking code"
+                />
+              </div>
+            )}
             <p className="text-sm text-pewter sm:col-span-2">
               HR will see who you are and can follow up with you directly.
             </p>
@@ -247,7 +268,7 @@ export function SubmitForm() {
         <Button type="submit" size="lg" disabled={submitting || tooShort} className="shrink-0">
           {submitting ? (
             <>
-              <Loader2 className="size-4 animate-spin" aria-hidden /> Analysing securely…
+              <Loader2 className="size-4 animate-spin" aria-hidden /> Sending securely…
             </>
           ) : (
             <>
@@ -260,8 +281,55 @@ export function SubmitForm() {
   );
 }
 
-function SuccessScreen({ result, identified }: { result: Result; identified: boolean }) {
+const POLL_MS = 2000;
+const POLL_MAX = 20; // ~40s
+
+/** Analysis runs after the response; poll the public tracking API until the summary lands. */
+function useAnalysis(result: Result) {
+  const [analysis, setAnalysis] = useState<{ summary: string | null; themes: string[] }>({
+    summary: result.summary,
+    themes: result.themes,
+  });
+  const [state, setState] = useState<"pending" | "done" | "slow">(result.summary ? "done" : "pending");
+
+  useEffect(() => {
+    if (result.summary) return;
+    let tries = 0;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      tries++;
+      try {
+        const res = await fetch(`/api/track/${result.trackingCode}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = (await res.json()) as { summary: string | null; themes: string[] | null };
+          if (!cancelled && data.summary) {
+            setAnalysis({ summary: data.summary, themes: data.themes ?? [] });
+            setState("done");
+            return;
+          }
+        }
+      } catch {
+        /* keep polling */
+      }
+      if (cancelled) return;
+      if (tries >= POLL_MAX) setState("slow");
+      else timer = setTimeout(tick, POLL_MS);
+    };
+    timer = setTimeout(tick, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [result.summary, result.trackingCode]);
+
+  return { ...analysis, state };
+}
+
+function SuccessScreen({ result, identified, portal }: { result: Result; identified: boolean; portal: boolean }) {
   const [copied, setCopied] = useState(false);
+  const analysis = useAnalysis(result);
+  const trackHref = portal ? `/portal/feedback/${result.trackingCode}` : `/track/${result.trackingCode}`;
   return (
     <div className="space-y-6">
       <Card glow="mint" arc className="text-center">
@@ -294,12 +362,21 @@ function SuccessScreen({ result, identified }: { result: Result; identified: boo
           </Button>
         </div>
         <p className="mx-auto mt-3 max-w-md text-sm text-pewter">
-          Save this code — it&apos;s the only way to check on your feedback
-          {identified ? ". We've also emailed it to you." : ", and we can't recover it for anonymous submissions."}
+          {portal ? (
+            <>
+              It&apos;s saved to My feedback — you&apos;ll get a notification when HR responds.
+              {identified && " We've also emailed it to you."}
+            </>
+          ) : (
+            <>
+              Save this code — it&apos;s the only way to check on your feedback
+              {identified ? ". We've also emailed it to you." : ", and we can't recover it for anonymous submissions."}
+            </>
+          )}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <ButtonLink href={`/track/${result.trackingCode}`}>
-            Track status <ArrowRight className="size-4" aria-hidden />
+          <ButtonLink href={trackHref}>
+            {portal ? "View in My feedback" : "Track status"} <ArrowRight className="size-4" aria-hidden />
           </ButtonLink>
           <Button type="button" variant="subtle" onClick={() => window.location.reload()}>
             Send another
@@ -307,19 +384,38 @@ function SuccessScreen({ result, identified }: { result: Result; identified: boo
         </div>
       </Card>
 
-      {result.summary && (
-        <Card>
-          <p className="eyebrow">What we heard</p>
-          <p className="mt-2 text-lg leading-relaxed text-ink">{result.summary}</p>
-          {result.themes.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {result.themes.map((t) => (
-                <Badge key={t}>{t}</Badge>
-              ))}
-            </div>
-          )}
-        </Card>
-      )}
+      <Card aria-live="polite">
+        <p className="eyebrow">What we heard</p>
+        {analysis.state === "done" && analysis.summary ? (
+          <>
+            <p className="mt-2 text-lg leading-relaxed text-ink">{analysis.summary}</p>
+            {analysis.themes.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {analysis.themes.map((t) => (
+                  <Badge key={t}>{t}</Badge>
+                ))}
+              </div>
+            )}
+          </>
+        ) : analysis.state === "slow" ? (
+          <p className="mt-2 text-pewter">
+            Our AI is still reading your feedback. It&apos;s safely stored — the summary will appear on your{" "}
+            <Link href={trackHref} className="text-cobalt hover:underline">
+              {portal ? "feedback page" : "tracking page"}
+            </Link>{" "}
+            shortly.
+          </p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            <p className="flex items-center gap-2 text-sm text-pewter">
+              <Loader2 className="size-4 animate-spin" aria-hidden /> Translating, removing personal details and finding
+              themes…
+            </p>
+            <div className="h-4 w-11/12 animate-pulse rounded bg-mist" />
+            <div className="h-4 w-3/4 animate-pulse rounded bg-mist" />
+          </div>
+        )}
+      </Card>
 
       <Card>
         <p className="eyebrow">What happens next</p>

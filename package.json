@@ -11,7 +11,10 @@
     "db": "node scripts/db.mjs",
     "create-hr": "node scripts/create-hr.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "create-employee": "node scripts/create-employee.mjs",
+    "seed:portal": "tsx scripts/seed-portal.ts",
+    "screenshots": "tsx scripts/screenshots.ts"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
@@ -39,6 +42,7 @@
     "dotenv": "^18.0.4",
     "eslint": "^9",
     "eslint-config-next": "15.5.26",
+    "playwright": "^1.63.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",

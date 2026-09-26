@@ -19,7 +19,7 @@ export function normalizeCode(raw: string) {
   return decodeURIComponent(raw).trim().toUpperCase().replace(/\s+/g, "");
 }
 
-export const CODE_PATTERN = /^PLS-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+export const CODE_PATTERN = /^(VOC|PLS)-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
 export async function lookupFeedback(rawCode: string): Promise<TrackedFeedback | null> {
   const code = normalizeCode(rawCode);

@@ -39,7 +39,7 @@ const rand = mulberry32(20260926);
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const code = () => {
   const part = () => Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
-  return `PLS-${part()}-${part()}`;
+  return `VOC-${part()}-${part()}`;
 };
 
 const DAY = 86400_000;

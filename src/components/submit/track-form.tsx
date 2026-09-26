@@ -14,8 +14,8 @@ export function TrackForm({ notFound }: { notFound?: boolean }) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const clean = code.trim().toUpperCase().replace(/\s+/g, "");
-    if (!/^PLS-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(clean)) {
-      setError("That doesn't look like a tracking code (format: PLS-XXXX-XXXX).");
+    if (!/^(VOC|PLS)-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(clean)) {
+      setError("That doesn't look like a tracking code (format: VOC-XXXX-XXXX).");
       return;
     }
     router.push(`/track/${clean}`);
@@ -32,7 +32,7 @@ export function TrackForm({ notFound }: { notFound?: boolean }) {
             setCode(e.target.value);
             setError("");
           }}
-          placeholder="PLS-XXXX-XXXX"
+          placeholder="VOC-XXXX-XXXX"
           autoComplete="off"
           spellCheck={false}
           aria-invalid={!!error}

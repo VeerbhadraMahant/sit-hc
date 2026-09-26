@@ -18,6 +18,9 @@ export function PublicHeader() {
           <Link href="/track" className="rounded-navlinks px-3 py-2 text-ink hover:text-cobalt">
             Track
           </Link>
+          <Link href="/login" className="ml-1 rounded-navlinks px-4 py-2 text-ink shadow-field hover:bg-mist">
+            Sign in
+          </Link>
         </nav>
       </div>
     </header>

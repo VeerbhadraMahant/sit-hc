@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Badge, UrgencyBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PublishUpdateButton } from "@/components/updates/publish-update-button";
 import { Select } from "@/components/ui/field";
 import { PillTabs } from "@/components/ui/pill-tabs";
 import { DEPARTMENTS, type InsightReport } from "@/lib/types";
@@ -54,12 +55,22 @@ function BrushHeadline({ text }: { text: string }) {
 }
 
 function useDoneActions(reportId: string | undefined) {
-  const storageKey = reportId ? `pulse:actions:${reportId}` : null;
+  const storageKey = reportId ? `vocalyze:actions:${reportId}` : null;
   const [done, setDone] = useState<Record<number, boolean>>({});
   useEffect(() => {
     if (!storageKey) return;
     try {
-      setDone(JSON.parse(localStorage.getItem(storageKey) ?? "{}"));
+      // One-time migration from the pre-rename key.
+      const legacyKey = storageKey.replace(/^vocalyze:/, "pulse:");
+      let saved = localStorage.getItem(storageKey);
+      if (saved === null) {
+        saved = localStorage.getItem(legacyKey);
+        if (saved !== null) {
+          localStorage.setItem(storageKey, saved);
+          localStorage.removeItem(legacyKey);
+        }
+      }
+      setDone(JSON.parse(saved ?? "{}"));
     } catch {
       setDone({});
     }
@@ -76,6 +87,11 @@ function useDoneActions(reportId: string | undefined) {
     });
   return { done, toggle };
 }
+
+/** Typical end-to-end generation time (thinking LOW, ≤150 prompt items); paces the progress steps. */
+const EXPECTED_MS = 15_000;
+/** Fraction of EXPECTED_MS at which each step starts. The last step stays active until the report lands. */
+const STEP_AT = [0, 0.12, 0.35, 0.6, 0.85];
 
 const STEPS = (n: number) => [
   `Reading ${n || "recent"} feedback items…`,
@@ -99,7 +115,7 @@ export function InsightsView({
   const [range, setRange] = useState<Range>("30");
   const [department, setDepartment] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [step, setStep] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [emailing, setEmailing] = useState(false);
 
   const report = useMemo(
@@ -110,10 +126,13 @@ export function InsightsView({
 
   useEffect(() => {
     if (!generating) return;
-    setStep(0);
-    const t = setInterval(() => setStep((s) => Math.min(s + 1, 4)), 2600);
+    const startedAt = Date.now();
+    setElapsedMs(0);
+    const t = setInterval(() => setElapsedMs(Date.now() - startedAt), 250);
     return () => clearInterval(t);
   }, [generating]);
+  // Steps advance with real elapsed time, never past the final step before the server responds.
+  const step = STEP_AT.reduce((acc, at, i) => (elapsedMs >= at * EXPECTED_MS ? i : acc), 0);
 
   async function generate() {
     setGenerating(true);
@@ -167,7 +186,7 @@ export function InsightsView({
           <p className="eyebrow">AI insight reports</p>
           <h1 className="text-heading-md font-semibold text-obsidian sm:text-heading">What your people are telling you</h1>
           <p className="mt-3 max-w-xl text-pewter">
-            Pulse reads every analysed piece of feedback, finds the patterns and turns them into a briefing you can take
+            Vocalyze reads every analysed piece of feedback, finds the patterns and turns them into a briefing you can take
             to leadership. {recentCount} items analysed in the last 30 days.
           </p>
         </div>
@@ -206,7 +225,7 @@ export function InsightsView({
               <span className="animate-pulse-ring absolute inset-0 rounded-full bg-cyan/40" />
               <Sparkles className="relative size-5 text-ink" />
             </div>
-            <ol className="space-y-2">
+            <ol className="flex-1 space-y-2">
               {STEPS(recentCount).map((s, i) => (
                 <li
                   key={s}
@@ -226,6 +245,9 @@ export function InsightsView({
                 </li>
               ))}
             </ol>
+            <span className="font-mono text-xs text-pewter tabular-nums" aria-live="off">
+              {(elapsedMs / 1000).toFixed(0)}s
+            </span>
           </div>
         </Card>
       )}
@@ -377,6 +399,10 @@ export function InsightsView({
                                 <span className="mt-1 block text-xs text-graphite">Impact: {a.expected_impact}</span>
                               </span>
                             </label>
+                            <PublishUpdateButton
+                              action={{ title: a.title, description: a.description }}
+                              className="mt-2 ml-7"
+                            />
                           </li>
                         ))}
                       </ul>

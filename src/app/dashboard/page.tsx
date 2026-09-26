@@ -3,17 +3,19 @@ import Link from "next/link";
 import { BarList } from "@/components/dashboard/charts/bar-list";
 import { SentimentHeatmap } from "@/components/dashboard/charts/heatmap";
 import { formatScore } from "@/components/dashboard/charts/scale";
-import { SentimentTrendChart } from "@/components/dashboard/charts/sentiment-trend";
+import { SentimentTrendLazy } from "@/components/dashboard/charts/sentiment-trend-lazy";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { UrgencyBadge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
+import { WellbeingCard } from "@/components/wellbeing/wellbeing-card";
 import { getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
 import { getHrUser } from "@/lib/supabase/server";
 import { RISK_LABELS, type RiskFlag } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
+import { Suspense } from "react";
 
-export const metadata = { title: "Overview — Pulse HR" };
+export const metadata = { title: "Overview — Vocalyze HR" };
 
 const CRITICAL_RISKS: RiskFlag[] = ["harassment", "discrimination", "safety", "ethics"];
 
@@ -129,7 +131,7 @@ export default async function OverviewPage({
           <section className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader eyebrow="Trend" title="Sentiment by week" />
-              <SentimentTrendChart data={o.weekly} />
+              <SentimentTrendLazy data={o.weekly} />
             </Card>
 
             <Card className="flex flex-col">
@@ -262,6 +264,10 @@ export default async function OverviewPage({
               </Link>
             </Card>
           </section>
+
+          <Suspense fallback={<Card className="h-64 animate-pulse" />}>
+            <WellbeingCard />
+          </Suspense>
         </>
       )}
     </div>

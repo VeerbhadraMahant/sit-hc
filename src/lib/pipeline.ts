@@ -3,15 +3,16 @@ import { randomInt } from "node:crypto";
 import { analyzeFeedback } from "@/lib/ai/analyze";
 import { embedText, toPgVector } from "@/lib/ai/embed";
 import { emailLayout, escapeHtml, sendEmail } from "@/lib/email";
+import { anonHash } from "@/lib/identity";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { RISK_LABELS, type FeedbackRow, type RiskFlag } from "@/lib/types";
 
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-/** e.g. PLS-7K4M-Q2XD — no ambiguous characters. */
+/** e.g. VOC-7K4M-Q2XD — no ambiguous characters. */
 export function generateTrackingCode() {
   const part = () => Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
-  return `PLS-${part()}-${part()}`;
+  return `VOC-${part()}-${part()}`;
 }
 
 export type NewFeedback = {
@@ -23,8 +24,16 @@ export type NewFeedback = {
   isAnonymous: boolean;
   submitterName?: string | null;
   submitterEmail?: string | null;
+  /** Signed-in employee. Stored as submitter_user_id (identified) or as an HMAC hash (anonymous). */
+  submitterUserId?: string | null;
   language?: string | null;
+  /** "background": return right after the insert; caller schedules processFeedback (e.g. via after()). */
+  analyze?: "sync" | "background";
 };
+
+/** Columns needed by callers of processFeedback — never the 768-float embedding. */
+const PROCESSED_COLUMNS =
+  "id,created_at,tracking_code,channel,language,redacted_text,department,category,is_anonymous,submitter_name,submitter_email,submitter_user_id,status,hr_response,responded_at,processing_status,processing_error,sentiment,sentiment_score,emotions,themes,summary,urgency,risk_flags,suggested_action";
 
 /**
  * Stores feedback, runs AI analysis + embedding, and alerts HR on critical items.
@@ -33,6 +42,7 @@ export type NewFeedback = {
 export async function createFeedback(input: NewFeedback): Promise<{ id: string; trackingCode: string; row: FeedbackRow | null }> {
   const db = createAdminClient();
   const trackingCode = generateTrackingCode();
+  const userId = input.submitterUserId || null;
 
   const { data: inserted, error } = await db
     .from("feedback")
@@ -47,12 +57,15 @@ export async function createFeedback(input: NewFeedback): Promise<{ id: string; 
       is_anonymous: input.isAnonymous,
       submitter_name: input.isAnonymous ? null : input.submitterName || null,
       submitter_email: input.isAnonymous ? null : input.submitterEmail || null,
+      submitter_user_id: input.isAnonymous ? null : userId,
+      submitter_hash: input.isAnonymous && userId ? anonHash(userId) : null,
     } as never)
     .select("id")
     .single();
   if (error || !inserted) throw new Error(`Could not save feedback: ${error?.message}`);
 
   const id = (inserted as { id: string }).id;
+  if (input.analyze === "background") return { id, trackingCode, row: null };
   const row = await processFeedback(id);
   return { id, trackingCode, row };
 }
@@ -60,7 +73,7 @@ export async function createFeedback(input: NewFeedback): Promise<{ id: string; 
 /** (Re)runs analysis for a stored feedback row. Safe to call again after a failure. */
 export async function processFeedback(id: string): Promise<FeedbackRow | null> {
   const db = createAdminClient();
-  const { data } = await db.from("feedback").select("*").eq("id", id).single();
+  const { data } = await db.from("feedback").select(`${PROCESSED_COLUMNS},raw_text`).eq("id", id).single();
   const fb = data as (FeedbackRow & { raw_text: string | null }) | null;
   if (!fb?.raw_text) return fb;
 
@@ -88,7 +101,7 @@ export async function processFeedback(id: string): Promise<FeedbackRow | null> {
         ...(fb.is_anonymous ? { raw_text: null } : {}),
       } as never)
       .eq("id", id)
-      .select("*")
+      .select(PROCESSED_COLUMNS)
       .single();
     if (error) throw error;
 

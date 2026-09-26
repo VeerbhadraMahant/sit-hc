@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireHr } from "@/lib/supabase/server";
 import type { InsightReport } from "@/lib/types";
 
-export const metadata = { title: "Insights — Pulse" };
+export const metadata = { title: "Insights — Vocalyze" };
 export const dynamic = "force-dynamic";
 
 export default async function InsightsPage({ searchParams }: { searchParams: Promise<{ report?: string }> }) {

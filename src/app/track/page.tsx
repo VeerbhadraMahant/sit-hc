@@ -3,7 +3,7 @@ import { PublicHeader } from "@/components/submit/public-header";
 import { TrackForm } from "@/components/submit/track-form";
 import { Card } from "@/components/ui/card";
 
-export const metadata: Metadata = { title: "Track your feedback — Pulse" };
+export const metadata: Metadata = { title: "Track your feedback — Vocalyze" };
 
 export default async function TrackPage({ searchParams }: { searchParams: Promise<{ notfound?: string }> }) {
   const { notfound } = await searchParams;
@@ -18,7 +18,7 @@ export default async function TrackPage({ searchParams }: { searchParams: Promis
         <Card glow="cyan" arc className="mt-10">
           <p className="mb-5 text-ink">
             Enter the tracking code you received after submitting. It looks like{" "}
-            <span className="font-mono text-sm whitespace-nowrap">PLS-7K4M-Q2XD</span>.
+            <span className="font-mono text-sm whitespace-nowrap">VOC-7K4M-Q2XD</span>.
           </p>
           <TrackForm notFound={notfound === "1"} />
         </Card>
