@@ -14,18 +14,23 @@ export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElem
   );
 }
 
-export const urgencyMeta: Record<Urgency, { label: string; color: string; Icon: typeof Info }> = {
+export const urgencyMeta: Record<Urgency, { label: string; color: string; Icon: typeof Info; loud?: boolean }> = {
   low: { label: "Low", color: "var(--status-good)", Icon: CircleCheck },
   medium: { label: "Medium", color: "var(--status-warning)", Icon: Info },
-  high: { label: "High", color: "var(--status-serious)", Icon: AlertTriangle },
-  critical: { label: "Critical", color: "var(--status-critical)", Icon: AlertOctagon },
+  high: { label: "High", color: "var(--status-serious)", Icon: AlertTriangle, loud: true },
+  critical: { label: "Critical", color: "var(--status-critical)", Icon: AlertOctagon, loud: true },
 };
 
+// Critical/high urgency gets a tinted pill (not just a small colored icon) so it's
+// unmistakable at a glance in dense lists — the whole point of flagging it as urgent.
 export function UrgencyBadge({ urgency, className }: { urgency: Urgency | null; className?: string }) {
   if (!urgency) return <Badge className={cn("text-pewter", className)}>Pending</Badge>;
-  const { label, color, Icon } = urgencyMeta[urgency];
+  const { label, color, Icon, loud } = urgencyMeta[urgency];
   return (
-    <Badge className={className}>
+    <Badge
+      className={className}
+      style={loud ? { color, background: `color-mix(in srgb, ${color} 12%, var(--color-paper))`, borderColor: `color-mix(in srgb, ${color} 30%, transparent)` } : undefined}
+    >
       <Icon className="size-3.5" style={{ color }} aria-hidden />
       {label}
     </Badge>

@@ -50,7 +50,7 @@ export function NavigationLink({
       aria-current={active ? "page" : undefined}
       aria-busy={isPending}
       className={cn(
-        "inline-flex h-9 items-center gap-2 rounded-navlinks px-3.5 text-sm font-medium whitespace-nowrap transition-all duration-150 select-none",
+        "inline-flex h-11 items-center gap-2 rounded-navlinks px-3.5 text-sm font-medium whitespace-nowrap transition-all duration-150 select-none",
         active
           ? "bg-carbon text-paper shadow-xs"
           : isPending

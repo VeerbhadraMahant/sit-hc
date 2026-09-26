@@ -124,12 +124,19 @@ export interface InsightReport {
   action_items: {
     title: string;
     description: string;
+    root_cause: string;
     priority: "P1" | "P2" | "P3";
     owner: string;
     timeframe: string;
     expected_impact: string;
+    evidence_ids: string[];
   }[];
+  pdf_generated_at: string | null;
 }
+
+/** Columns for list/detail views — excludes pdf_bytes (a large base64 blob only the download route needs). */
+export const INSIGHT_REPORT_COLUMNS =
+  "id,created_at,created_by,period_start,period_end,department,feedback_count,headline,executive_summary,top_concerns,positives,action_items,pdf_generated_at";
 
 // ── Employee portal ─────────────────────────────────────────────
 

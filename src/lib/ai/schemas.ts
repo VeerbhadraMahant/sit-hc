@@ -51,10 +51,16 @@ export const InsightSchema = z.object({
       z.object({
         title: z.string().describe("Imperative, specific action"),
         description: z.string(),
+        root_cause: z
+          .string()
+          .describe(
+            "The one concrete detail from the feedback that this action responds to, stated plainly — e.g. '3 engineers reported working 3 straight on-call weekends' — not a restatement of the action itself.",
+          ),
         priority: z.enum(["P1", "P2", "P3"]),
         owner: z.string().describe("Accountable role or team, e.g. 'Engineering leadership', 'HRBP – Sales'"),
         timeframe: z.string().describe("e.g. 'This week', 'Within 30 days', 'This quarter'"),
         expected_impact: z.string(),
+        evidence_ids: z.array(z.string()).describe("Reference keys like F12 of the feedback items behind root_cause"),
       }),
     )
     .max(6),

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { generateInsightReport } from "@/lib/ai/insights";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getHrUser } from "@/lib/supabase/server";
+import { INSIGHT_REPORT_COLUMNS } from "@/lib/types";
 
 export const maxDuration = 60;
 
@@ -16,7 +17,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data, error } = await createAdminClient()
     .from("insight_reports")
-    .select("*")
+    .select(INSIGHT_REPORT_COLUMNS)
     .order("created_at", { ascending: false })
     .limit(20);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

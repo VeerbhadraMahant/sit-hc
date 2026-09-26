@@ -92,14 +92,13 @@ export default async function OverviewPage({
             <StatTile
               label="Feedback received"
               value={kpis.total}
-              glow="cyan"
               delta={kpis.deltaPct != null ? { value: kpis.deltaPct, label: `${Math.abs(kpis.deltaPct).toFixed(0)}%` } : null}
               sub={<span>vs previous {period}d</span>}
             />
             <StatTile
               label="Avg sentiment"
               value={formatScore(kpis.avgSentiment)}
-              glow="mint"
+              glow={kpis.avgSentiment == null ? undefined : kpis.avgSentiment >= 0 ? "good" : "critical"}
               delta={sentimentDelta != null ? { value: sentimentDelta, label: formatScore(sentimentDelta) } : null}
               sub={<span>{kpis.pctNegative != null ? `${kpis.pctNegative.toFixed(0)}% negative` : "scale −1 to +1"}</span>}
             />
@@ -113,13 +112,12 @@ export default async function OverviewPage({
                   )}
                 </span>
               }
-              glow="orchid"
+              glow={kpis.openUrgent > 0 ? "critical" : undefined}
               sub={<span>critical + high, not yet actioned</span>}
             />
             <StatTile
               label="Response rate"
               value={kpis.responseRate != null ? `${kpis.responseRate.toFixed(0)}%` : "—"}
-              glow="amber"
               sub={
                 <span>
                   {kpis.medianHoursToRespond != null
@@ -152,7 +150,13 @@ export default async function OverviewPage({
                 <ul className="-mx-2 flex-1 space-y-1">
                   {o.needsAttention.map((f) => (
                     <li key={f.id}>
-                      <Link href={`/dashboard/feedback?id=${f.id}`} className="block rounded-smallcards px-2 py-2.5 hover:bg-mist/70">
+                      <Link
+                        href={`/dashboard/feedback?id=${f.id}`}
+                        className={cn(
+                          "block rounded-smallcards border-l-[3px] px-3 py-2.5 hover:bg-mist/70",
+                          f.urgency === "critical" ? "border-critical bg-critical/5" : "border-transparent",
+                        )}
+                      >
                         <div className="flex items-center gap-2">
                           <UrgencyBadge urgency={f.urgency} />
                           <span className="truncate text-xs text-pewter">

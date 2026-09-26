@@ -8,6 +8,7 @@ import {
   FileDown,
   Loader2,
   Mail,
+  Quote,
   RefreshCw,
   Sparkles,
   ThumbsUp,
@@ -17,7 +18,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge, UrgencyBadge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PublishUpdateButton } from "@/components/updates/publish-update-button";
 import { Select } from "@/components/ui/field";
@@ -28,9 +29,9 @@ import { cn, formatDate, timeAgo } from "@/lib/utils";
 type Range = "7" | "30" | "90";
 
 const PRIORITY_META = {
-  P1: { label: "P1 · Now", glow: "orchid" as const, hint: "Urgent risk or broad impact" },
-  P2: { label: "P2 · Next", glow: "amber" as const, hint: "Important, plan this month" },
-  P3: { label: "P3 · Later", glow: "mint" as const, hint: "Improvements to schedule" },
+  P1: { label: "P1 · Now", glow: "critical" as const, hint: "Urgent risk or broad impact" },
+  P2: { label: "P2 · Next", glow: "warning" as const, hint: "Important, plan this month" },
+  P3: { label: "P3 · Later", glow: "good" as const, hint: "Improvements to schedule" },
 };
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 } as const;
@@ -180,17 +181,20 @@ export function InsightsView({
 
   return (
     <div className="insights-print space-y-8">
-      {/* Header + controls */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="eyebrow">AI insight reports</p>
-          <h1 className="text-heading-md font-semibold text-obsidian sm:text-heading">What your people are telling you</h1>
-          <p className="mt-3 max-w-xl text-pewter">
-            Vocalyze reads every analysed piece of feedback, finds the patterns and turns them into a briefing you can take
-            to leadership. {recentCount} items analysed in the last 30 days.
-          </p>
-        </div>
-        <Card small className="flex flex-wrap items-center gap-3 print:hidden">
+      {/* Header */}
+      <div>
+        <p className="eyebrow">AI insight reports</p>
+        <h1 className="text-heading-md font-semibold text-obsidian sm:text-heading">What your people are telling you</h1>
+        <p className="mt-3 max-w-xl text-pewter">
+          Vocalyze reads every analysed piece of feedback, finds the patterns and turns them into a briefing you can take
+          to leadership. <span className="font-semibold text-ink">{recentCount} items</span> analysed in the last 30 days.
+        </p>
+      </div>
+
+      {/* Controls — full-width toolbar, not a cramped side card */}
+      <Card className="flex flex-col gap-4 print:hidden sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <span className="eyebrow shrink-0">Period</span>
           <PillTabs
             value={range}
             onChange={setRange}
@@ -204,19 +208,19 @@ export function InsightsView({
             aria-label="Department"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            className="h-11 w-auto min-w-44"
+            className="h-11 w-full sm:w-auto sm:min-w-48"
           >
             <option value="">All departments</option>
             {DEPARTMENTS.map((d) => (
               <option key={d}>{d}</option>
             ))}
           </Select>
-          <Button onClick={generate} disabled={generating}>
-            {generating ? <Loader2 className="size-4 animate-spin" /> : report ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
-            {report ? "Generate new report" : "Generate report"}
-          </Button>
-        </Card>
-      </div>
+        </div>
+        <Button onClick={generate} disabled={generating} className="w-full sm:w-auto">
+          {generating ? <Loader2 className="size-4 animate-spin" /> : report ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}
+          {report ? "Generate new report" : "Generate report"}
+        </Button>
+      </Card>
 
       {generating && (
         <Card glow="cyan" arc className="print:hidden">
@@ -285,11 +289,11 @@ export function InsightsView({
                 <BrushHeadline text={report.headline} />
               </h2>
               <p className="mt-6 max-w-3xl text-subheading text-carbon">{report.executive_summary}</p>
-              <div className="mt-6 flex flex-wrap gap-2 print:hidden">
-                <Button variant="subtle" size="sm" onClick={() => window.print()}>
-                  <FileDown className="size-4" /> Export PDF
-                </Button>
-                <Button variant="subtle" size="sm" onClick={emailReport} disabled={emailing}>
+              <div className="mt-6 flex flex-wrap gap-3 print:hidden">
+                <a href={`/api/insights/${report.id}/pdf`} className={buttonClass("primary", "md")} download>
+                  <FileDown className="size-4" /> Download PDF report
+                </a>
+                <Button variant="subtle" onClick={emailReport} disabled={emailing}>
                   {emailing ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
                   Email to leadership
                 </Button>
@@ -387,7 +391,13 @@ export function InsightsView({
                                 >
                                   {a.title}
                                 </span>
-                                <span className="mt-1 block text-sm text-carbon">{a.description}</span>
+                                {a.root_cause && (
+                                  <span className="mt-1.5 flex items-start gap-1.5 rounded-smallcards border border-amber/40 bg-amber-card/35 px-2.5 py-1.5 text-xs leading-snug font-medium text-graphite">
+                                    <Quote className="mt-0.5 size-3 shrink-0 text-graphite/70" aria-hidden />
+                                    {a.root_cause}
+                                  </span>
+                                )}
+                                <span className="mt-1.5 block text-sm text-carbon">{a.description}</span>
                                 <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-pewter">
                                   <span className="inline-flex items-center gap-1">
                                     <Users className="size-3" /> {a.owner}
@@ -397,6 +407,25 @@ export function InsightsView({
                                   </span>
                                 </span>
                                 <span className="mt-1 block text-xs text-graphite">Impact: {a.expected_impact}</span>
+                                {a.evidence_ids.length > 0 && (
+                                  <details className="mt-2 text-xs">
+                                    <summary className="cursor-pointer font-medium text-cobalt">
+                                      View evidence ({a.evidence_ids.length})
+                                    </summary>
+                                    <ul className="mt-1 space-y-1">
+                                      {a.evidence_ids.slice(0, 5).map((id, j) => (
+                                        <li key={id}>
+                                          <Link
+                                            href={`/dashboard/feedback?id=${id}`}
+                                            className="inline-flex items-center gap-1 text-cobalt hover:underline"
+                                          >
+                                            Feedback #{j + 1} <ArrowUpRight className="size-3" />
+                                          </Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </details>
+                                )}
                               </span>
                             </label>
                             <PublishUpdateButton
@@ -419,7 +448,7 @@ export function InsightsView({
                 <h3 className="mb-4 text-heading-sm font-semibold text-ink">What&apos;s working</h3>
                 <div className="grid gap-4 md:grid-cols-3">
                   {report.positives.map((p, i) => (
-                    <Card key={i} glow="mint" arc className="break-inside-avoid">
+                    <Card key={i} glow="good" arc className="break-inside-avoid">
                       <ThumbsUp className="mb-3 size-5 text-ink" />
                       <h4 className="font-semibold text-obsidian">{p.title}</h4>
                       <p className="mt-1 text-sm text-carbon">{p.description}</p>
