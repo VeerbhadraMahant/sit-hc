@@ -31,7 +31,10 @@ export function LandingNav() {
           ))}
         </nav>
         <div className="ml-auto hidden items-center gap-2 sm:flex">
-          <ButtonLink href="/login" variant="ghost" size="sm">
+          <ButtonLink href="/login?as=employee" variant="ghost" size="sm">
+            Employee login
+          </ButtonLink>
+          <ButtonLink href="/login?as=hr" variant="ghost" size="sm">
             HR login
           </ButtonLink>
           <ButtonLink href="/submit" size="sm">
@@ -65,7 +68,10 @@ export function LandingNav() {
           </nav>
           <div className="mt-4 flex flex-col gap-2 sm:hidden">
             <ButtonLink href="/submit">Share feedback</ButtonLink>
-            <ButtonLink href="/login" variant="subtle">
+            <ButtonLink href="/login?as=employee" variant="subtle">
+              Employee login
+            </ButtonLink>
+            <ButtonLink href="/login?as=hr" variant="subtle">
               HR login
             </ButtonLink>
           </div>
