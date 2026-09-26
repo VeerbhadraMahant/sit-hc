@@ -418,13 +418,13 @@ export function InsightsView({
                                   </span>
                                 </span>
                                 <span className="mt-1 block text-xs text-graphite">Impact: {a.expected_impact}</span>
-                                {a.evidence_ids.length > 0 && (
+                                {(a.evidence_ids?.length ?? 0) > 0 && (
                                   <details className="mt-2 text-xs">
                                     <summary className="cursor-pointer font-medium text-cobalt">
-                                      View evidence ({a.evidence_ids.length})
+                                      View evidence ({a.evidence_ids?.length})
                                     </summary>
                                     <ul className="mt-1 space-y-1">
-                                      {a.evidence_ids.slice(0, 5).map((id, j) => (
+                                      {a.evidence_ids?.slice(0, 5).map((id, j) => (
                                         <li key={id}>
                                           <Link
                                             href={`/dashboard/feedback?id=${id}`}
