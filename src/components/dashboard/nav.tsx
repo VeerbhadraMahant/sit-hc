@@ -25,6 +25,9 @@ function DashboardNavInner({ className }: { className?: string }) {
   return (
     <nav
       className={cn(
+        // Icon-only from md, full icon+label from lg — guarantees every tab fits with
+        // no horizontal scrolling at any desktop width; overflow-x-auto stays only as
+        // a last-resort safety net, never the normal path.
         "flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-mist bg-paper p-1 shadow-[rgba(29,33,48,0.08)_0_0_0_1px]",
         className,
       )}
@@ -45,13 +48,14 @@ function DashboardNavInner({ className }: { className?: string }) {
             active={active}
             Icon={Icon}
             label={label}
-            className={
-              isAlert
-                ? active
+            labelClassName="hidden xl:inline"
+            className={cn(
+              "px-2.5 xl:px-3.5",
+              isAlert &&
+                (active
                   ? "bg-[#d03b3b] text-white shadow-xs hover:bg-[#b83232]"
-                  : "border border-red-200/80 bg-red-500/[0.06] text-[#d03b3b] hover:bg-red-500/12"
-                : undefined
-            }
+                  : "border border-red-200/80 bg-red-500/[0.06] text-[#d03b3b] hover:bg-red-500/12"),
+            )}
             extra={
               isAlert ? (
                 <span className="relative flex size-2 shrink-0" aria-hidden>

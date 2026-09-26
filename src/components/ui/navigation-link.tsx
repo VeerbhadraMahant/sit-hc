@@ -12,6 +12,7 @@ export function NavigationLink({
   Icon,
   active,
   className,
+  labelClassName,
   extra,
 }: {
   href: string;
@@ -19,6 +20,8 @@ export function NavigationLink({
   Icon: LucideIcon;
   active: boolean;
   className?: string;
+  /** Extra classes on the label span — e.g. "hidden lg:inline" to go icon-only at narrower widths. */
+  labelClassName?: string;
   extra?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -53,6 +56,8 @@ export function NavigationLink({
       onFocus={() => router.prefetch(href)}
       aria-current={active ? "page" : undefined}
       aria-busy={isPending}
+      aria-label={label}
+      title={labelClassName ? label : undefined}
       className={cn(
         "inline-flex h-11 items-center gap-2 rounded-navlinks px-3.5 text-sm font-medium whitespace-nowrap transition-all duration-150 select-none",
         active
@@ -68,7 +73,7 @@ export function NavigationLink({
       ) : (
         <Icon className="size-4" aria-hidden />
       )}
-      <span>{label}</span>
+      <span className={labelClassName}>{label}</span>
       {extra}
       {isPending && <span className="sr-only">Loading {label}...</span>}
     </Link>
