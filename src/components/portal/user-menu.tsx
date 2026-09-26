@@ -32,7 +32,11 @@ export function PortalUserMenu({ name, email }: { name: string | null; email: st
   }, [open]);
 
   async function signOut() {
-    await createClient().auth.signOut();
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        await createClient().auth.signOut();
+      } catch {}
+    }
     router.replace("/login");
     router.refresh();
   }
