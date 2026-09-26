@@ -5,7 +5,7 @@ begin;
 -- Stored as base64 text (not bytea) so PostgREST round-trips it as a plain JSON
 -- string with no binary-encoding pitfalls.
 alter table public.insight_reports
-  add column pdf_bytes text,
-  add column pdf_generated_at timestamptz;
+  add column if not exists pdf_bytes text,
+  add column if not exists pdf_generated_at timestamptz;
 
 commit;
