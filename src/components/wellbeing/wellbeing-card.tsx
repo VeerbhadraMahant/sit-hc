@@ -98,11 +98,43 @@ function DeptRow({ row }: { row: WellbeingRow }) {
 function TrendChart({ rows }: { rows: WellbeingRow[] }) {
   const W = 560;
   const H = 150;
-  const pad = { l: 26, r: 58, t: 10, b: 22 };
+  const pad = { l: 26, r: 76, t: 10, b: 22 };
   const iw = W - pad.l - pad.r;
   const ih = H - pad.t - pad.b;
   const x = (i: number) => pad.l + (rows.length <= 1 ? iw / 2 : (i / (rows.length - 1)) * iw);
   const y = (v: number) => pad.t + ((5 - v) / 4) * ih;
+
+  const last = rows.at(-1);
+  const MIN_LABEL_GAP = 15;
+  const labelPositions: Record<string, number> = (() => {
+    if (!last) return {};
+    const items = SERIES.map((s) => ({
+      key: s.key,
+      y: y(last[s.key]),
+    })).sort((a, b) => a.y - b.y);
+
+    if (items.length >= 2) {
+      const [top, bottom] = items;
+      const diff = bottom.y - top.y;
+      if (diff < MIN_LABEL_GAP) {
+        const overlap = MIN_LABEL_GAP - diff;
+        top.y -= overlap / 2;
+        bottom.y -= overlap / 2;
+
+        if (top.y < pad.t + 4) {
+          const shift = pad.t + 4 - top.y;
+          top.y += shift;
+          bottom.y += shift;
+        } else if (bottom.y > H - pad.b) {
+          const shift = bottom.y - (H - pad.b);
+          top.y -= shift;
+          bottom.y -= shift;
+        }
+      }
+    }
+
+    return Object.fromEntries(items.map((item) => [item.key, item.y]));
+  })();
 
   return (
     <figure>
@@ -132,7 +164,8 @@ function TrendChart({ rows }: { rows: WellbeingRow[] }) {
         )}
         {SERIES.map((s) => {
           const pts = rows.map((r, i) => `${x(i)},${y(r[s.key])}`).join(" ");
-          const last = rows.at(-1)!;
+          const lastPoint = rows.at(-1)!;
+          const labelY = labelPositions[s.key] ?? y(lastPoint[s.key]);
           return (
             <g key={s.key}>
               <polyline points={pts} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
@@ -141,8 +174,8 @@ function TrendChart({ rows }: { rows: WellbeingRow[] }) {
                   <title>{`Week of ${formatDate(r.week)} · ${s.label} ${r[s.key].toFixed(2)} · ${r.respondents} people`}</title>
                 </circle>
               ))}
-              <text x={x(rows.length - 1) + 10} y={y(last[s.key]) + 3.5} fontSize={11} fontWeight={500} fill="var(--color-midnight-ink)">
-                {s.label} {last[s.key].toFixed(1)}
+              <text x={x(rows.length - 1) + 8} y={labelY + 3.5} fontSize={11} fontWeight={500} fill="var(--color-midnight-ink)">
+                {s.label} {lastPoint[s.key].toFixed(1)}
               </text>
             </g>
           );
