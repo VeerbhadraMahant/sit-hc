@@ -5,13 +5,13 @@ import { SentimentHeatmap } from "@/components/dashboard/charts/heatmap";
 import { formatScore } from "@/components/dashboard/charts/scale";
 import { SentimentTrendLazy } from "@/components/dashboard/charts/sentiment-trend-lazy";
 import { DiscontentDrivers } from "@/components/dashboard/discontent-drivers";
-import { ImpactLoop } from "@/components/dashboard/impact-loop";
+import { ImpactLoopSection } from "@/components/dashboard/impact-loop";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { UrgencyBadge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { WellbeingCard } from "@/components/wellbeing/wellbeing-card";
-import { getImpactLoop, getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
+import { getOverview, parsePeriod, PERIODS } from "@/lib/dashboard-data";
 import { getHrUser } from "@/lib/supabase/server";
 import { RISK_LABELS, type RiskFlag } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
@@ -40,7 +40,7 @@ export default async function OverviewPage({
 }) {
   const sp = await searchParams;
   const period = parsePeriod(sp.days);
-  const [user, o, impactResults] = await Promise.all([getHrUser(), getOverview(period), getImpactLoop()]);
+  const [user, o] = await Promise.all([getHrUser(), getOverview(period)]);
   const { kpis } = o;
   const firstName = user?.fullName?.split(" ")[0];
   const sentimentDelta =
@@ -344,7 +344,9 @@ export default async function OverviewPage({
             <WellbeingCard />
           </Suspense>
 
-          <ImpactLoop results={impactResults} />
+          <Suspense fallback={<Card className="h-64 animate-pulse" />}>
+            <ImpactLoopSection />
+          </Suspense>
         </>
       )}
     </div>

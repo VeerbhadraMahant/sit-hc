@@ -171,7 +171,7 @@ export function SubmitForm({ mode: formMode = "public", defaultName, defaultEmai
           <div>
             <Label htmlFor="category">Type of feedback</Label>
             <Select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">We'll figure it out</option>
+              <option value="">We&apos;ll figure it out</option>
               {CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}

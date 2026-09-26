@@ -2,8 +2,15 @@ import { ArrowRight, CheckCircle2, Megaphone, MinusCircle, XCircle } from "lucid
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
-import type { ImpactLoopResult } from "@/lib/dashboard-data";
+import { getImpactLoop, type ImpactLoopResult } from "@/lib/dashboard-data";
 import { cn, formatDate } from "@/lib/utils";
+
+/** Fetches its own data so the overview page's first paint doesn't wait on this
+ * (last-section, below-the-fold) query — render this inside a <Suspense>. */
+export async function ImpactLoopSection({ className }: { className?: string }) {
+  const results = await getImpactLoop();
+  return <ImpactLoop results={results} className={className} />;
+}
 
 function DeltaBadge({ delta }: { delta: number | null }) {
   if (delta === null) {
